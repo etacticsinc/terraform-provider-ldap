@@ -13,77 +13,32 @@ type LdapClient struct {
 	BindPassword string
 }
 
-//city string,
-//country string,
-//description string,
-//displayName string,
-//managedBy string,
-//postalCode string,
-//state string,
-//streetAddress string,
-func (c *LdapClient) OrganizationalUnitCreate(name string, path string, attributes map[string][]string) error {
+func (c *LdapClient) Add(obj LdapObject) error {
 
-	dn := "CN=" + name + "," + path
+	dn, err := obj.DistinguishedName()
 
-	organizationalUnit := ldap.NewAddRequest(dn, []ldap.Control{})
+	if err != nil {
+		return err
+	}
+
+	request := ldap.NewAddRequest(dn, []ldap.Control{})
+
+	attributes, err := obj.Attributes()
+
+	if err != nil {
+		return err
+	}
 
 	for key, value := range attributes {
-		if len(value) > 0 {
-			organizationalUnit.Attribute(key, value)
-		}
+		request.Attribute(key, value)
 	}
 
-	organizationalUnit.Attribute("objectClass", []string{"top", "organizationalUnit"})
-
-	organizationalUnit.Attribute("name", []string{name})
-
-	return c.bindThen(func(conn *ldap.Conn) error { return conn.Add(organizationalUnit) })
-}
-
-//description string,
-//displayName string,
-//groupCategory string,
-//groupScope string,
-//homePage string,
-//managedBy string,
-//name string,
-//path string,
-//samAccountName string
-func (c *LdapClient) GroupCreate(name string, path string, category string, scope string, attributes map[string][]string) error {
-
-	dn := "CN=" + name + "," + path
-
-	group := ldap.NewAddRequest(dn, []ldap.Control{})
-
-	for key, value := range attributes {
-		if len(value) > 0 {
-			group.Attribute(key, value)
-		}
-	}
-
-	if category != "" || scope != "" {
-		groupType, err := c.groupType(category, scope)
-
-		if err != nil {
-			return err
-		}
-		group.Attribute("groupType", []string{groupType})
-	}
-
-	group.Attribute("objectClass", []string{"top", "group"})
-
-	group.Attribute("name", []string{name})
-
-	// Allow writes on group object
+	// Allow writes on object
 	// https://docs.microsoft.com/en-us/windows/win32/adschema/a-instancetype
 
-	group.Attribute("instanceType", []string{fmt.Sprintf("%d", 0x00000004)})
+	request.Attribute("instanceType", []string{fmt.Sprintf("%d", 0x00000004)})
 
-	return c.bindThen(func(conn *ldap.Conn) error { return conn.Add(group) })
-}
-
-func (c *LdapClient) UserCreate(name string, path string, accountExpirationDate string, attributes map[string][]string) error {
-
+	return c.bindThen(func(conn *ldap.Conn) error { return conn.Add(request) })
 }
 
 func (c *LdapClient) bindThen(fn func(*ldap.Conn) error) error {
