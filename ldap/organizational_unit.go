@@ -1,9 +1,9 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"github.com/go-ldap/ldap"
+	"strings"
 )
 
 type OrganizationalUnit struct {
@@ -19,35 +19,61 @@ type OrganizationalUnit struct {
 	StreetAddress string
 }
 
-func NewOrganizationalUnit(attributes map[string][]string) OrganizationalUnit {
-	return OrganizationalUnit{
-		City: attributes[city],
-	}
-}
 
-func (ou *OrganizationalUnit) Attributes() (map[string][]string, error) {
-	return map[string][]string{
-		"objectClass": {"top", "organizationalUnit"},
+
+func (ou *OrganizationalUnit) Attributes() Attributes {
+	return Attributes{map[string][]string{
+		"objectClass": ou.ObjectClass(),
 		"l":           {ou.City},
 		"c":           {ou.Country},
 		"description": {ou.Description},
 		"displayName": {ou.DisplayName},
 		"managedBy":   {ou.ManagedBy},
 		"name":        {ou.Name},
+		"instanceType":{fmt.Sprintf("%d", 0x00000004)},
 		"postalCode":  {ou.PostalCode},
 		"st":          {ou.State},
 		"street":      {ou.StreetAddress},
-	}, nil
+	}}
 }
 
-func (ou *OrganizationalUnit) DistinguishedName() (string, error) {
-	if ou.Name == "" {
-		return "", errors.New("undefined organizational unit name")
+func (ou *OrganizationalUnit) SetAttributes(attributes Attributes) {
+	ou.City = attributes.GetFirst("l")
+	ou.Country = attributes.GetFirst("c")
+	ou.Description = attributes.GetFirst("description")
+	ou.DisplayName = attributes.GetFirst("displayName")
+	ou.ManagedBy = attributes.GetFirst("managedBy")
+	ou.Name = attributes.GetFirst("name")
+	ou.PostalCode = attributes.GetFirst("postalCode")
+	ou.State = attributes.GetFirst("st")
+	ou.StreetAddress = attributes.GetFirst("street")
+}
+
+func (ou *OrganizationalUnit) ObjectClass() []string {
+	return []string{"top", "organizationalUnit"}
+}
+
+func (ou *OrganizationalUnit) DistinguishedName() string {
+	return fmt.Sprintf("CN=%s,%s", ou.CommonName(), ou.Path)
+}
+
+func (ou * OrganizationalUnit) BaseDN() string {
+
+	parts := strings.Split(ou.Path, ",")
+
+	baseDN := ""
+
+	for i := len(parts) - 1; i >= 0; i-- {
+		part := parts[i]
+		if !strings.EqualFold("DC", strings.Split(part, "=")[0]) {
+			return baseDN
+		}
+		baseDN = part + baseDN
 	}
 
-	if ou.Path == "" {
-		return "", errors.New("undefined organizational unit path")
-	}
+	return baseDN
+}
 
-	return fmt.Sprintf("CN=%s,%s", ldap.EscapeFilter(ou.Name), ou.Path), nil
+func (ou *OrganizationalUnit) CommonName() string {
+	return ldap.EscapeFilter(ou.Name)
 }

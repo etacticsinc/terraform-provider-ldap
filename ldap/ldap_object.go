@@ -1,6 +1,10 @@
 package main
 
 type LdapObject interface {
-	DistinguishedName() (string, error)
-	Attributes() (map[string][]string, error)
+	ObjectClass() []string
+	DistinguishedName() string
+	CommonName() string
+	BaseDN() string
+	Attributes() Attributes
+	SetAttributes(attributes Attributes)
 }

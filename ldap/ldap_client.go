@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/go-ldap/ldap/v3"
-	"reflect"
+	"strings"
 )
 
 type LdapClient struct {
@@ -15,30 +15,72 @@ type LdapClient struct {
 
 func (c *LdapClient) Add(obj LdapObject) error {
 
-	dn, err := obj.DistinguishedName()
+	attributes := obj.Attributes()
 
-	if err != nil {
-		return err
+	request := ldap.NewAddRequest(obj.DistinguishedName(), []ldap.Control{})
+
+	attributes.ForEach(request.Attribute)
+
+	add := func(conn *ldap.Conn) error { return conn.Add(request) }
+
+	return c.bindThen(add)
+}
+
+func (c *LdapClient) Search(obj LdapObject) error {
+
+	attributes := obj.Attributes()
+
+	search := func(conn *ldap.Conn) error {
+
+		objectClass := obj.ObjectClass()
+
+		filters := make([]string, len(objectClass) + 1)
+
+		filters[0] = "CN=" + obj.CommonName()
+
+		for i, class := range objectClass {
+			filters[i + 1] = "objectClass=" + ldap.EscapeFilter(class)
+		}
+
+		filter := "(&(" + strings.Join(filters, ")(") + "))"
+
+		request := ldap.NewSearchRequest(
+			obj.BaseDN(),
+			ldap.ScopeWholeSubtree,
+			0,
+			0,
+			0,
+			false,
+			filter,
+			attributes.Keys(),
+			[]ldap.Control{})
+
+		result, err := conn.Search(request)
+
+		if err != nil {
+			return err
+		}
+
+		entries := result.Entries
+
+		if len(entries) == 0 { // Not found
+			return errors.New(fmt.Sprintf("Not found. (filter=%s)", filter))
+		} else if len(entries) > 1 { // Non-unique (shouldn't be possible)
+			return errors.New(fmt.Sprintf("Non-unique result. (filter=%s)", filter))
+		}
+
+		m := make(map[string][]string)
+
+		for _, attr  := range entries[0].Attributes {
+			m[attr.Name] = attr.Values
+		}
+
+		obj.SetAttributes(Attributes{m})
+
+		return nil
 	}
 
-	request := ldap.NewAddRequest(dn, []ldap.Control{})
-
-	attributes, err := obj.Attributes()
-
-	if err != nil {
-		return err
-	}
-
-	for key, value := range attributes {
-		request.Attribute(key, value)
-	}
-
-	// Allow writes on object
-	// https://docs.microsoft.com/en-us/windows/win32/adschema/a-instancetype
-
-	request.Attribute("instanceType", []string{fmt.Sprintf("%d", 0x00000004)})
-
-	return c.bindThen(func(conn *ldap.Conn) error { return conn.Add(request) })
+	return c.bindThen(search)
 }
 
 func (c *LdapClient) bindThen(fn func(*ldap.Conn) error) error {
@@ -66,35 +108,4 @@ func (c *LdapClient) bindThen(fn func(*ldap.Conn) error) error {
 	}
 
 	return fn(conn)
-}
-
-func (c *LdapClient) groupType(category string, scope string) (string, error) {
-
-	// Group Category and Scope are stored as a single bitmask property 'groupType'
-	// https://docs.microsoft.com/en-us/windows/win32/adschema/a-grouptype
-
-	categoryMasks := map[string]int{
-		"Distribution": 0x00000000,
-		"Security":     0x80000000,
-	}
-
-	categoryMask := categoryMasks[category]
-
-	if categoryMask == 0 {
-		return "", errors.New(fmt.Sprintf("invalid group category %q (expected one of %+q)", category, reflect.ValueOf(categoryMasks).MapKeys()))
-	}
-
-	scopeMasks := map[string]int{
-		"DomainLocal": 0x00000004,
-		"Global":      0x00000002,
-		"Universal":   0x00000008,
-	}
-
-	scopeMask := scopeMasks[scope]
-
-	if scopeMask == 0 {
-		return "", errors.New(fmt.Sprintf("invalid group scope %q (expected one of %+q)", scope, reflect.ValueOf(scopeMasks).MapKeys()))
-	}
-
-	return fmt.Sprintf("%d", categoryMask|scopeMask), nil
 }
