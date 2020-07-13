@@ -1,4 +1,4 @@
-package main
+package ldap
 
 type Config struct {
 	Server       string
@@ -7,7 +7,7 @@ type Config struct {
 }
 
 func (c *Config) Client() (interface{}, error) {
-	client := &LdapClient{
+	client := &Client{
 		Server:       c.Server,
 		BindDN:       c.BindDN,
 		BindPassword: c.BindPassword,

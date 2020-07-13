@@ -1,4 +1,4 @@
-package main
+package ldap
 
 import (
 	"github.com/hashicorp/terraform-plugin-sdk/plugin"

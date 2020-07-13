@@ -1,9 +1,10 @@
-package main
+package ldap
 
-type LdapObject interface {
-	ObjectClass() []string
-	DistinguishedName() string
-	CommonName() string
+type Object interface {
+	Class() []string
+	DN() string
+	RelativeDN() string
+	CN() string
 	BaseDN() string
 	Attributes() Attributes
 	SetAttributes(attributes Attributes)
