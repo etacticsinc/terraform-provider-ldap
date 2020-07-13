@@ -1,9 +1,9 @@
 package main
 
 import (
-	"errors"
 	"fmt"
-	"github.com/go-ldap/ldap/v3"
+	"ldap/internal"
+	"strconv"
 )
 
 const (
@@ -12,63 +12,91 @@ const (
 	domainLocal  = "DomainLocal"
 	global       = "Global"
 	universal    = "Universal"
+	posixGroup   = "posixGroup"
+	group        = "group"
 )
 
 type Group struct {
 	Description    string
-	DisplayName    string
+	GidNumber      string
 	GroupCategory  string
 	GroupScope     string
 	HomePage       string
-	ManagedBy      string
 	Name           string
+	ObjectClass    []string
 	Path           string
 	SamAccountName string
 }
 
-func (g *Group) DistinguishedName() (string, error) {
-	if g.Name == "" {
-		return "", errors.New("undefined group name")
+func (g *Group) GetAttributes() Attributes {
+	m := map[string][]string{
+		"objectClass":    g.ObjectClass,
+		"description":    {g.Description},
+		"gidNumber":      {g.GidNumber},
+		"wWWHomePage":    {g.HomePage},
+		"sAMAccountName": {g.SamAccountName},
 	}
-
-	if g.Path == "" {
-		return "", errors.New("undefined group path")
+	if g.GroupCategory != "" && g.GroupScope != "" {
+		// Group Category and Scope are stored as a single bitmask property 'groupType'
+		// https://docs.microsoft.com/en-us/windows/win32/adschema/a-grouptype
+		groupTypeMask := 0
+		if categoryMask, ok := g.categoryMasks()[g.GroupCategory]; ok {
+			groupTypeMask |= categoryMask
+		}
+		if scopeMask, ok := g.scopeMasks()[g.GroupScope]; ok {
+			groupTypeMask |= scopeMask
+		}
+		m["groupType"] = []string{fmt.Sprintf("%d", groupTypeMask)}
 	}
-
-	return fmt.Sprintf("CN=%s,%s", ldap.EscapeFilter(g.Name), g.Path), nil
+	return Attributes{m}
 }
 
-func (g *Group) Attributes() (map[string][]string, error) {
-
-	// Group Category and Scope are stored as a single bitmask property 'groupType'
-	// https://docs.microsoft.com/en-us/windows/win32/adschema/a-grouptype
-
-	groupTypeMask := 0
-
-	if categoryMask, ok := g.categoryMasks()[g.GroupCategory]; ok {
-		groupTypeMask |= categoryMask
-	} else if g.GroupCategory != "" {
-		return nil, errors.New(fmt.Sprintf("invalid group category %q", g.GroupCategory))
+func (g *Group) SetAttributes(attributes Attributes) {
+	groupType := attributes.GetFirst("groupType")
+	if groupType != "" {
+		mask, err := strconv.Atoi(groupType)
+		if err != nil {
+			categoryMasks := g.categoryMasks()
+			securityMask := categoryMasks[security]
+			if mask&securityMask == securityMask {
+				g.GroupCategory = security
+			} else {
+				g.GroupCategory = distribution
+			}
+			scopeMasks := g.scopeMasks()
+			globalMask := scopeMasks[global]
+			domainLocalMask := scopeMasks[domainLocal]
+			universalMask := scopeMasks[universal]
+			if mask&globalMask == globalMask {
+				g.GroupScope = global
+			} else if mask&domainLocalMask == domainLocalMask {
+				g.GroupScope = domainLocal
+			} else if mask&universalMask == universalMask {
+				g.GroupScope = universal
+			}
+		}
 	}
+	g.ObjectClass = attributes.Get("objectClass")
+	g.Description = attributes.GetFirst("description")
+	g.GidNumber = attributes.GetFirst("gidNumber")
+	g.HomePage = attributes.GetFirst("wWWHomePage")
+	g.SamAccountName = attributes.GetFirst("sAMAccountName")
+}
 
-	if scopeMask, ok := g.scopeMasks()[g.GroupScope]; ok {
-		groupTypeMask |= scopeMask
-	} else if g.GroupScope != "" {
-		return nil, errors.New(fmt.Sprintf("invalid group scope %q", g.GroupScope))
-	}
+func (g *Group) GetObjectClass() []string {
+	return g.ObjectClass
+}
 
-	groupType := fmt.Sprintf("%d", groupTypeMask)
+func (g *Group) GetDN() string {
+	return fmt.Sprintf("%s,%s", g.GetRelativeDN(), g.Path)
+}
 
-	return map[string][]string{
-		"objectClass":    {"top", "group"},
-		"description":    {g.Description},
-		"displayName":    {g.DisplayName},
-		"groupType":      {groupType},
-		"wWWHomePage":    {g.HomePage},
-		"managedBy":      {g.ManagedBy},
-		"name":           {g.Name},
-		"sAMAccountName": {g.SamAccountName},
-	}, nil
+func (g *Group) GetBaseDN() string {
+	return internal.BaseDN(g.Path)
+}
+
+func (g *Group) GetRelativeDN() string {
+	return "cn=" + g.Name
 }
 
 func (g *Group) categoryMasks() map[string]int {

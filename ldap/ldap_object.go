@@ -1,10 +1,14 @@
 package main
 
+const (
+	top = "top"
+)
+
 type Object interface {
-	Class() []string
-	DN() string
-	RelativeDN() string
-	BaseDN() string
-	Attributes() Attributes
+	GetObjectClass() []string
+	GetDN() string
+	GetRelativeDN() string
+	GetBaseDN() string
+	GetAttributes() Attributes
 	SetAttributes(attributes Attributes)
 }

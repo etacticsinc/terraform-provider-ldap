@@ -16,19 +16,22 @@ type Client struct {
 
 func (c *Client) Add(obj Object) error {
 	add := func(conn *ldap.Conn) error {
-		attributes := obj.Attributes()
-		request := ldap.NewAddRequest(obj.DN(), []ldap.Control{})
+		attributes := obj.GetAttributes()
+		request := ldap.NewAddRequest(obj.GetDN(), []ldap.Control{})
 		attributes.ForEach(request.Attribute)
-		return conn.Add(request)
+		if err := conn.Add(request); err != nil {
+			return fmt.Errorf("%v\nattributes: %v", err, attributes.String())
+		}
+		return nil
 	}
 	return c.bindThen(add)
 }
 
 func (c *Client) Search(obj Object) error {
 	search := func(conn *ldap.Conn) error {
-		baseDN := obj.BaseDN()
-		filter := internal.Filter(obj.RelativeDN(), obj.Class())
-		attributes := obj.Attributes()
+		baseDN := obj.GetBaseDN()
+		filter := internal.Filter(obj.GetRelativeDN(), obj.GetObjectClass())
+		attributes := obj.GetAttributes()
 		request := ldap.NewSearchRequest(baseDN, ldap.ScopeWholeSubtree, 0, 0, 0, false, filter, attributes.Keys(), []ldap.Control{})
 		result, err := conn.Search(request)
 		if err != nil {
@@ -52,42 +55,29 @@ func (c *Client) Search(obj Object) error {
 
 func (c *Client) Delete(obj Object) error {
 	delete := func(conn *ldap.Conn) error {
-		dn := obj.DN()
+		dn := obj.GetDN()
 		request := ldap.NewDelRequest(dn, []ldap.Control{})
 		return conn.Del(request)
 	}
 	return c.bindThen(delete)
 }
 
-func (c *Client) Rename(obj Object, newName string) error {
-	rename := func(conn *ldap.Conn) error {
-		dn := obj.DN()
-		rdn := obj.RelativeDN()
-		rdnSplit := strings.Split(rdn, "=")
-		rdnSplit[1] = newName
-		rdn = strings.Join(rdnSplit, "=")
-		request := ldap.NewModifyDNRequest(dn, rdn, true, "")
-		return conn.ModifyDN(request)
-	}
-	return c.bindThen(rename)
-}
-
 func (c *Client) Modify(old Object, new Object) error {
 	modify := func(conn *ldap.Conn) error {
-		if old.DN() != new.DN() {
-			oldPath := strings.Replace(old.DN(), old.RelativeDN()+",", "", 1)
-			newPath := strings.Replace(new.DN(), new.RelativeDN()+",", "", 1)
+		if old.GetDN() != new.GetDN() {
+			oldPath := strings.Replace(old.GetDN(), old.GetRelativeDN()+",", "", 1)
+			newPath := strings.Replace(new.GetDN(), new.GetRelativeDN()+",", "", 1)
 			if oldPath == newPath {
 				newPath = ""
 			}
-			request := ldap.NewModifyDNRequest(old.DN(), new.RelativeDN(), true, newPath)
+			request := ldap.NewModifyDNRequest(old.GetDN(), new.GetRelativeDN(), true, newPath)
 			if err := conn.ModifyDN(request); err != nil {
 				return err
 			}
 		}
-		oldAttributes := old.Attributes()
-		newAttributes := new.Attributes()
-		request := ldap.NewModifyRequest(new.DN(), []ldap.Control{})
+		oldAttributes := old.GetAttributes()
+		newAttributes := new.GetAttributes()
+		request := ldap.NewModifyRequest(new.GetDN(), []ldap.Control{})
 		modified := false
 		for _, key := range newAttributes.Keys() {
 			if newAttributes.HasValue(key) {

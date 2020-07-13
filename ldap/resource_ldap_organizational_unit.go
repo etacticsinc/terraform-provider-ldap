@@ -10,8 +10,16 @@ func resourceLdapOrganizationalUnit() *schema.Resource {
 		Read:   resourceLdapOrganizationalUnitRead,
 		Update: resourceLdapOrganizationalUnitUpdate,
 		Delete: resourceLdapOrganizationalUnitDelete,
-
 		Schema: map[string]*schema.Schema{
+			"object_class": {
+				Type:         schema.TypeSet,
+				Optional:     true,
+				Computed:     true,
+				Elem:         &schema.Schema{Type: schema.TypeString},
+				Set:          schema.HashString,
+				Description:  "The list of classes from which this object is derived.",
+				//ValidateFunc: internal.SetIntersection([]interface{}{top, organizationalUnit}, 2),
+			},
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
@@ -59,7 +67,7 @@ func resourceLdapOrganizationalUnit() *schema.Resource {
 }
 
 func NewOrganizationalUnit(d *schema.ResourceData) OrganizationalUnit {
-	return OrganizationalUnit{
+	ou := OrganizationalUnit{
 		Name:          d.Get("name").(string),
 		Path:          d.Get("path").(string),
 		Description:   d.Get("description").(string),
@@ -69,6 +77,16 @@ func NewOrganizationalUnit(d *schema.ResourceData) OrganizationalUnit {
 		PostalCode:    d.Get("postal_code").(string),
 		Country:       d.Get("country").(string),
 	}
+	if c := d.Get("object_class").(*schema.Set); c != nil && c.Len() > 0 {
+		objectClass := make([]string, 0)
+		for _, c := range c.List() {
+			objectClass = append(objectClass, c.(string))
+		}
+		ou.ObjectClass = objectClass
+	} else {
+		ou.ObjectClass = []string{top, organizationalUnit}
+	}
+	return ou
 }
 
 func resourceLdapOrganizationalUnitCreate(d *schema.ResourceData, m interface{}) error {
@@ -77,7 +95,7 @@ func resourceLdapOrganizationalUnitCreate(d *schema.ResourceData, m interface{})
 	if err := client.Add(&ou); err != nil {
 		return err
 	}
-	d.SetId(ou.DN())
+	d.SetId(ou.GetDN())
 	return resourceLdapOrganizationalUnitRead(d, m)
 }
 
@@ -92,41 +110,51 @@ func resourceLdapOrganizationalUnitRead(d *schema.ResourceData, m interface{}) e
 
 func resourceLdapOrganizationalUnitUpdate(d *schema.ResourceData, m interface{}) error {
 	client := m.(*Client)
-	old := NewOrganizationalUnit(d)
-	new := NewOrganizationalUnit(d)
+	prev := NewOrganizationalUnit(d)
+	next := NewOrganizationalUnit(d)
+	if d.HasChange("object_class") {
+		prevObjectClass := make([]string, 0)
+		c, _ := d.GetChange("object_class")
+		if c := c.(*schema.Set); c.Len() > 0 {
+			for _, c := range c.List() {
+				prevObjectClass = append(prevObjectClass, c.(string))
+			}
+		}
+		prev.ObjectClass = prevObjectClass
+	}
 	if d.HasChange("name") {
-		oldName, _ := d.GetChange("name")
-		old.Name = oldName.(string)
+		prevName, _ := d.GetChange("name")
+		prev.Name = prevName.(string)
 	}
 	if d.HasChange("path") {
-		oldPath, _ := d.GetChange("path")
-		old.Path = oldPath.(string)
+		prevPath, _ := d.GetChange("path")
+		prev.Path = prevPath.(string)
 	}
 	if d.HasChange("description") {
-		oldDescription, _ := d.GetChange("description")
-		old.Description = oldDescription.(string)
+		prevDescription, _ := d.GetChange("description")
+		prev.Description = prevDescription.(string)
 	}
 	if d.HasChange("street_address") {
-		oldStreetAddress, _ := d.GetChange("street_address")
-		old.StreetAddress = oldStreetAddress.(string)
+		prevStreetAddress, _ := d.GetChange("street_address")
+		prev.StreetAddress = prevStreetAddress.(string)
 	}
 	if d.HasChange("city") {
-		oldCity, _ := d.GetChange("city")
-		old.City = oldCity.(string)
+		prevCity, _ := d.GetChange("city")
+		prev.City = prevCity.(string)
 	}
 	if d.HasChange("state") {
-		oldState, _ := d.GetChange("state")
-		old.State = oldState.(string)
+		prevState, _ := d.GetChange("state")
+		prev.State = prevState.(string)
 	}
 	if d.HasChange("postal_code") {
-		oldPostalCode, _ := d.GetChange("postal_code")
-		old.PostalCode = oldPostalCode.(string)
+		prevPostalCode, _ := d.GetChange("postal_code")
+		prev.PostalCode = prevPostalCode.(string)
 	}
 	if d.HasChange("country") {
-		oldCountry, _ := d.GetChange("country")
-		old.Country = oldCountry.(string)
+		prevCountry, _ := d.GetChange("country")
+		prev.Country = prevCountry.(string)
 	}
-	if err := client.Modify(&old, &new); err != nil {
+	if err := client.Modify(&prev, &next); err != nil {
 		return err
 	}
 	return resourceLdapOrganizationalUnitRead(d, m)

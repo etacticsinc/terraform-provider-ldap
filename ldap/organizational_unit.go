@@ -5,20 +5,25 @@ import (
 	"ldap/internal"
 )
 
+const (
+	organizationalUnit = "organizationalUnit"
+)
+
 type OrganizationalUnit struct {
 	City          string
 	Country       string
 	Description   string
 	Name          string
+	ObjectClass   []string
 	Path          string
 	PostalCode    string
 	State         string
 	StreetAddress string
 }
 
-func (ou *OrganizationalUnit) Attributes() Attributes {
+func (ou *OrganizationalUnit) GetAttributes() Attributes {
 	return Attributes{map[string][]string{
-		"objectClass":   ou.Class(),
+		"objectClass":   ou.ObjectClass,
 		"l":             {ou.City},
 		"c":             {ou.Country},
 		"description":   {ou.Description},
@@ -30,6 +35,7 @@ func (ou *OrganizationalUnit) Attributes() Attributes {
 }
 
 func (ou *OrganizationalUnit) SetAttributes(attributes Attributes) {
+	ou.ObjectClass = attributes.Get("objectClass")
 	ou.City = attributes.GetFirst("l")
 	ou.Country = attributes.GetFirst("c")
 	ou.Description = attributes.GetFirst("description")
@@ -39,18 +45,18 @@ func (ou *OrganizationalUnit) SetAttributes(attributes Attributes) {
 	ou.StreetAddress = attributes.GetFirst("streetAddress")
 }
 
-func (ou *OrganizationalUnit) Class() []string {
-	return []string{"top", "organizationalUnit"}
+func (ou *OrganizationalUnit) GetObjectClass() []string {
+	return ou.ObjectClass
 }
 
-func (ou *OrganizationalUnit) DN() string {
-	return fmt.Sprintf("%s,%s", ou.RelativeDN(), ou.Path)
+func (ou *OrganizationalUnit) GetDN() string {
+	return fmt.Sprintf("%s,%s", ou.GetRelativeDN(), ou.Path)
 }
 
-func (ou *OrganizationalUnit) BaseDN() string {
+func (ou *OrganizationalUnit) GetBaseDN() string {
 	return internal.BaseDN(ou.Path)
 }
 
-func (ou *OrganizationalUnit) RelativeDN() string {
+func (ou *OrganizationalUnit) GetRelativeDN() string {
 	return "ou=" + ou.Name
 }

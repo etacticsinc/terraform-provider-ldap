@@ -9,6 +9,9 @@
 # Test binary, built with `go test -c`
 *.test
 *.tf
+*.tfstate
+*.tfstate.backup
+terraform-provider-ldap
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out

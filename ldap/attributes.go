@@ -1,5 +1,10 @@
 package main
 
+import (
+	"encoding/json"
+	"fmt"
+)
+
 type Attributes struct {
 	Map map[string][]string
 }
@@ -18,7 +23,7 @@ func (a *Attributes) GetFirst(key string) string {
 
 func (a *Attributes) ForEach(fn func(string, []string)) {
 	for key, elem := range a.Map {
-		if elem != nil && len(elem) > 0 && elem[0] != "" {
+		if a.HasValue(key) {
 			fn(key, elem)
 		}
 	}
@@ -37,4 +42,13 @@ func (a *Attributes) Keys() []string {
 		i++
 	}
 	return keys
+}
+
+func (a *Attributes) String() string {
+	m := make(map[string][]string)
+	a.ForEach(func(key string, value []string) {
+		m[key] = value
+	})
+	json, _ := json.Marshal(m)
+	return fmt.Sprintf("%v", string(json))
 }
