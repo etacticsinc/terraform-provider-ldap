@@ -1,38 +1,31 @@
-package ldap
+package main
 
 import (
-	"./internal"
 	"fmt"
+	"ldap/internal"
 )
 
 type OrganizationalUnit struct {
 	City          string
 	Country       string
 	Description   string
-	DisplayName   string
-	ManagedBy     string
 	Name          string
 	Path          string
 	PostalCode    string
-	ObjectGUID    string
 	State         string
 	StreetAddress string
 }
 
 func (ou *OrganizationalUnit) Attributes() Attributes {
 	return Attributes{map[string][]string{
-		"objectClass":  ou.Class(),
-		"l":            {ou.City},
-		"c":            {ou.Country},
-		"description":  {ou.Description},
-		"displayName":  {ou.DisplayName},
-		"managedBy":    {ou.ManagedBy},
-		"name":         {ou.Name},
-		"instanceType": {fmt.Sprintf("%d", 0x00000004)},
-		"objectGUID":   {ou.ObjectGUID},
-		"postalCode":   {ou.PostalCode},
-		"st":           {ou.State},
-		"street":       {ou.StreetAddress},
+		"objectClass":   ou.Class(),
+		"l":             {ou.City},
+		"c":             {ou.Country},
+		"description":   {ou.Description},
+		"ou":            {ou.Name},
+		"postalCode":    {ou.PostalCode},
+		"st":            {ou.State},
+		"streetAddress": {ou.StreetAddress},
 	}}
 }
 
@@ -40,13 +33,10 @@ func (ou *OrganizationalUnit) SetAttributes(attributes Attributes) {
 	ou.City = attributes.GetFirst("l")
 	ou.Country = attributes.GetFirst("c")
 	ou.Description = attributes.GetFirst("description")
-	ou.DisplayName = attributes.GetFirst("displayName")
-	ou.ManagedBy = attributes.GetFirst("managedBy")
-	ou.Name = attributes.GetFirst("name")
-	ou.ObjectGUID = attributes.GetFirst("objectGUID")
+	ou.Name = attributes.GetFirst("ou")
 	ou.PostalCode = attributes.GetFirst("postalCode")
 	ou.State = attributes.GetFirst("st")
-	ou.StreetAddress = attributes.GetFirst("street")
+	ou.StreetAddress = attributes.GetFirst("streetAddress")
 }
 
 func (ou *OrganizationalUnit) Class() []string {
@@ -54,7 +44,7 @@ func (ou *OrganizationalUnit) Class() []string {
 }
 
 func (ou *OrganizationalUnit) DN() string {
-	return internal.DN(ou.Name, ou.Path)
+	return fmt.Sprintf("%s,%s", ou.RelativeDN(), ou.Path)
 }
 
 func (ou *OrganizationalUnit) BaseDN() string {
@@ -62,9 +52,5 @@ func (ou *OrganizationalUnit) BaseDN() string {
 }
 
 func (ou *OrganizationalUnit) RelativeDN() string {
-	return internal.RelativeDN(ou.Name)
-}
-
-func (ou *OrganizationalUnit) CN() string {
-	return internal.CN(ou.Name)
+	return "ou=" + ou.Name
 }

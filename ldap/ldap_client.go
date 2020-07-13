@@ -1,10 +1,11 @@
-package ldap
+package main
 
 import (
-	"./internal"
 	"errors"
 	"fmt"
 	"github.com/go-ldap/ldap/v3"
+	"ldap/internal"
+	"strings"
 )
 
 type Client struct {
@@ -25,12 +26,13 @@ func (c *Client) Add(obj Object) error {
 
 func (c *Client) Search(obj Object) error {
 	search := func(conn *ldap.Conn) error {
+		baseDN := obj.BaseDN()
 		filter := internal.Filter(obj.RelativeDN(), obj.Class())
 		attributes := obj.Attributes()
-		request := ldap.NewSearchRequest(obj.BaseDN(), ldap.ScopeWholeSubtree, 0, 0, 0, false, filter, attributes.Keys(), []ldap.Control{})
+		request := ldap.NewSearchRequest(baseDN, ldap.ScopeWholeSubtree, 0, 0, 0, false, filter, attributes.Keys(), []ldap.Control{})
 		result, err := conn.Search(request)
 		if err != nil {
-			return err
+			return fmt.Errorf("%v\nbase: %v\nfilter: %v", err, baseDN, filter)
 		}
 		entries := result.Entries
 		if len(entries) == 0 { // Not found
@@ -48,55 +50,72 @@ func (c *Client) Search(obj Object) error {
 	return c.bindThen(search)
 }
 
-func (c *Client) Delete(name string, path string) error {
+func (c *Client) Delete(obj Object) error {
 	delete := func(conn *ldap.Conn) error {
-		dn := internal.DN(name, path)
+		dn := obj.DN()
 		request := ldap.NewDelRequest(dn, []ldap.Control{})
 		return conn.Del(request)
 	}
 	return c.bindThen(delete)
 }
 
-func (c *Client) Rename(name string, path string, newName string) error {
+func (c *Client) Rename(obj Object, newName string) error {
 	rename := func(conn *ldap.Conn) error {
-		dn := internal.DN(name, path)
-		rdn := internal.RelativeDN(newName)
+		dn := obj.DN()
+		rdn := obj.RelativeDN()
+		rdnSplit := strings.Split(rdn, "=")
+		rdnSplit[1] = newName
+		rdn = strings.Join(rdnSplit, "=")
 		request := ldap.NewModifyDNRequest(dn, rdn, true, "")
 		return conn.ModifyDN(request)
 	}
 	return c.bindThen(rename)
 }
 
-func (c *Client) Move(name string, path string, newPath string) error {
-	move := func(conn *ldap.Conn) error {
-		dn := internal.DN(name, path)
-		rdn := internal.RelativeDN(name)
-		request := ldap.NewModifyDNRequest(dn, rdn, true, newPath)
-		return conn.ModifyDN(request)
-	}
-	return c.bindThen(move)
-}
-
-func (c *Client) Modify(name string, path string, oldAttributes map[string][]string, newAttributes map[string][]string) error {
+func (c *Client) Modify(old Object, new Object) error {
 	modify := func(conn *ldap.Conn) error {
-		dn := internal.DN(name, path)
-		request := ldap.NewModifyRequest(dn, []ldap.Control{})
-		for key, newAttribute := range newAttributes {
-			if newAttribute == nil || len(newAttribute) == 0 || newAttribute[0] == "" {
-				if oldAttribute, ok := oldAttributes[key]; ok && oldAttribute != nil {
-					request.Delete(key, oldAttribute)
-				} else {
-					return errors.New(fmt.Sprintf("cannot delete attribute '%s,' no initial value specified", key))
-				}
-			} else {
-				if oldAttribute, ok := oldAttributes[key]; ok && oldAttribute != nil {
-					request.Replace(key, newAttribute)
-				} else {
+		if old.DN() != new.DN() {
+			oldPath := strings.Replace(old.DN(), old.RelativeDN()+",", "", 1)
+			newPath := strings.Replace(new.DN(), new.RelativeDN()+",", "", 1)
+			if oldPath == newPath {
+				newPath = ""
+			}
+			request := ldap.NewModifyDNRequest(old.DN(), new.RelativeDN(), true, newPath)
+			if err := conn.ModifyDN(request); err != nil {
+				return err
+			}
+		}
+		oldAttributes := old.Attributes()
+		newAttributes := new.Attributes()
+		request := ldap.NewModifyRequest(new.DN(), []ldap.Control{})
+		modified := false
+		for _, key := range newAttributes.Keys() {
+			if newAttributes.HasValue(key) {
+				newAttribute := newAttributes.Get(key)
+				oldAttribute := oldAttributes.Get(key)
+				if oldAttribute == nil {
 					request.Add(key, newAttribute)
+				} else {
+					for i, value := range newAttribute {
+						if i >= len(oldAttribute) || oldAttribute[i] != value {
+							request.Replace(key, newAttribute)
+							modified = true
+							break
+						}
+					}
 				}
 			}
 		}
-		return conn.Modify(request)
+		for _, key := range oldAttributes.Keys() {
+			if oldAttributes.HasValue(key) && !newAttributes.HasValue(key) {
+				request.Delete(key, oldAttributes.Get(key))
+				modified = true
+			}
+		}
+		if modified {
+			return conn.Modify(request)
+		}
+		return nil
 	}
 	return c.bindThen(modify)
 }

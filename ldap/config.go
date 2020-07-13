@@ -1,4 +1,4 @@
-package ldap
+package main
 
 type Config struct {
 	Server       string

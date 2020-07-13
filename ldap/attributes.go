@@ -1,4 +1,4 @@
-package ldap
+package main
 
 type Attributes struct {
 	Map map[string][]string
@@ -18,13 +18,15 @@ func (a *Attributes) GetFirst(key string) string {
 
 func (a *Attributes) ForEach(fn func(string, []string)) {
 	for key, elem := range a.Map {
-		fn(key, elem)
+		if elem != nil && len(elem) > 0 && elem[0] != "" {
+			fn(key, elem)
+		}
 	}
 }
 
-func (a *Attributes) Contains(key string) bool {
+func (a *Attributes) HasValue(key string) bool {
 	elem, ok := a.Map[key]
-	return ok && len(elem) > 0
+	return ok && elem != nil && len(elem) > 0 && elem[0] != ""
 }
 
 func (a *Attributes) Keys() []string {
