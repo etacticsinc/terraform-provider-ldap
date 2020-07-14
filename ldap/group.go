@@ -18,7 +18,7 @@ const (
 
 type Group struct {
 	Description    string
-	GidNumber      string
+	GidNumber      int
 	GroupCategory  string
 	GroupScope     string
 	HomePage       string
@@ -32,9 +32,11 @@ func (g *Group) GetAttributes() Attributes {
 	m := map[string][]string{
 		"objectClass":    g.ObjectClass,
 		"description":    {g.Description},
-		"gidNumber":      {g.GidNumber},
 		"wWWHomePage":    {g.HomePage},
 		"sAMAccountName": {g.SamAccountName},
+	}
+	if g.GidNumber != 0 {
+		m["gidNumber"] = []string{strconv.Itoa(g.GidNumber)}
 	}
 	if g.GroupCategory != "" && g.GroupScope != "" {
 		// Group Category and Scope are stored as a single bitmask property 'groupType'
@@ -52,6 +54,10 @@ func (g *Group) GetAttributes() Attributes {
 }
 
 func (g *Group) SetAttributes(attributes Attributes) {
+	if attributes.HasValue("gidNumber") {
+		gidNumber, _ := strconv.Atoi(attributes.GetFirst("gidNumber"))
+		g.GidNumber = gidNumber
+	}
 	groupType := attributes.GetFirst("groupType")
 	if groupType != "" {
 		mask, err := strconv.Atoi(groupType)
@@ -78,7 +84,6 @@ func (g *Group) SetAttributes(attributes Attributes) {
 	}
 	g.ObjectClass = attributes.Get("objectClass")
 	g.Description = attributes.GetFirst("description")
-	g.GidNumber = attributes.GetFirst("gidNumber")
 	g.HomePage = attributes.GetFirst("wWWHomePage")
 	g.SamAccountName = attributes.GetFirst("sAMAccountName")
 }

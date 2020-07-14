@@ -15,13 +15,12 @@ func resourceLdapGroup() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"object_class": {
-				Type:         schema.TypeSet,
-				Optional:     true,
-				Computed:     true,
-				Elem:         &schema.Schema{Type: schema.TypeString},
-				Set:          schema.HashString,
-				Description:  "The list of classes from which this object is derived.",
-				//ValidateFunc: internal.SetIntersection([]interface{}{top, group, posixGroup}, 2),
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Set:         schema.HashString,
+				Description: "The list of classes from which this object is derived.",
 			},
 			"name": {
 				Type:        schema.TypeString,
@@ -41,7 +40,7 @@ func resourceLdapGroup() *schema.Resource {
 				Description: "Specifies a description of the object.",
 			},
 			"gid_number": {
-				Type:        schema.TypeString,
+				Type:        schema.TypeInt,
 				Optional:    true,
 				Description: "Contains an integer value that uniquely identifies a group in an administrative domain.",
 			},
@@ -76,7 +75,7 @@ func NewGroup(d *schema.ResourceData) Group {
 		Name:           d.Get("name").(string),
 		Path:           d.Get("path").(string),
 		Description:    d.Get("description").(string),
-		GidNumber:      d.Get("gid_number").(string),
+		GidNumber:      d.Get("gid_number").(int),
 		GroupCategory:  d.Get("group_category").(string),
 		GroupScope:     d.Get("group_scope").(string),
 		HomePage:       d.Get("homepage").(string),
@@ -141,7 +140,7 @@ func resourceLdapGroupUpdate(d *schema.ResourceData, m interface{}) error {
 	}
 	if d.HasChange("gid_number") {
 		prevGidNumber, _ := d.GetChange("gid_number")
-		prev.GidNumber = prevGidNumber.(string)
+		prev.GidNumber = prevGidNumber.(int)
 	}
 	if d.HasChange("group_category") {
 		prevGroupCategory, _ := d.GetChange("group_category")

@@ -4,12 +4,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
-func resourceLdapOrganizationalUnit() *schema.Resource {
+func resourceLdapUser() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceLdapOrganizationalUnitCreate,
-		Read:   resourceLdapOrganizationalUnitRead,
-		Update: resourceLdapOrganizationalUnitUpdate,
-		Delete: resourceLdapOrganizationalUnitDelete,
+		Create: resourceLdapUserCreate,
+		Read:   resourceLdapUserRead,
+		Update: resourceLdapUserUpdate,
+		Delete: resourceLdapUserDelete,
 		Schema: map[string]*schema.Schema{
 			"object_class": {
 				Type:        schema.TypeSet,
@@ -61,20 +61,50 @@ func resourceLdapOrganizationalUnit() *schema.Resource {
 				Optional:    true,
 				Description: "Specifies the country or region code.",
 			},
+			"surname": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Specifies the user's last name or surname.",
+			},
+			"uid": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "A user ID.",
+			},
+			"uid_number": {
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Description: "Contains a number that uniquely identifies a user in an administrative domain.",
+			},
+			"gid_number": {
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Description: "Contains an integer value that uniquely identifies a group in an administrative domain.",
+			},
+			"home_directory": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The home directory for the account.",
+			},
 		},
 	}
 }
 
-func NewOrganizationalUnit(d *schema.ResourceData) OrganizationalUnit {
-	ou := OrganizationalUnit{
+func NewUser(d *schema.ResourceData) User {
+	ou := User{
+		City:          d.Get("city").(string),
+		Country:       d.Get("country").(string),
+		Description:   d.Get("description").(string),
+		GidNumber:     d.Get("gid_number").(int),
+		HomeDirectory: d.Get("home_directory").(string),
 		Name:          d.Get("name").(string),
 		Path:          d.Get("path").(string),
-		Description:   d.Get("description").(string),
-		StreetAddress: d.Get("street_address").(string),
-		City:          d.Get("city").(string),
-		State:         d.Get("state").(string),
 		PostalCode:    d.Get("postal_code").(string),
-		Country:       d.Get("country").(string),
+		StreetAddress: d.Get("street_address").(string),
+		State:         d.Get("state").(string),
+		Surname:       d.Get("surname").(string),
+		Uid:           d.Get("uid").(string),
+		UidNumber:     d.Get("uid_number").(int),
 	}
 	if c := d.Get("object_class").(*schema.Set); c != nil && c.Len() > 0 {
 		objectClass := make([]string, 0)
@@ -83,34 +113,34 @@ func NewOrganizationalUnit(d *schema.ResourceData) OrganizationalUnit {
 		}
 		ou.ObjectClass = objectClass
 	} else {
-		ou.ObjectClass = []string{top, organizationalUnit}
+		ou.ObjectClass = []string{top, person, organizationalPerson, user}
 	}
 	return ou
 }
 
-func resourceLdapOrganizationalUnitCreate(d *schema.ResourceData, m interface{}) error {
+func resourceLdapUserCreate(d *schema.ResourceData, m interface{}) error {
 	client := m.(*Client)
-	ou := NewOrganizationalUnit(d)
+	ou := NewUser(d)
 	if err := client.Add(&ou); err != nil {
 		return err
 	}
 	d.SetId(ou.GetDN())
-	return resourceLdapOrganizationalUnitRead(d, m)
+	return resourceLdapUserRead(d, m)
 }
 
-func resourceLdapOrganizationalUnitRead(d *schema.ResourceData, m interface{}) error {
+func resourceLdapUserRead(d *schema.ResourceData, m interface{}) error {
 	client := m.(*Client)
-	ou := NewOrganizationalUnit(d)
+	ou := NewUser(d)
 	if err := client.Search(&ou); err != nil {
 		return err
 	}
 	return nil
 }
 
-func resourceLdapOrganizationalUnitUpdate(d *schema.ResourceData, m interface{}) error {
+func resourceLdapUserUpdate(d *schema.ResourceData, m interface{}) error {
 	client := m.(*Client)
-	prev := NewOrganizationalUnit(d)
-	next := NewOrganizationalUnit(d)
+	prev := NewUser(d)
+	next := NewUser(d)
 	if d.HasChange("object_class") {
 		prevObjectClass := make([]string, 0)
 		c, _ := d.GetChange("object_class")
@@ -153,15 +183,35 @@ func resourceLdapOrganizationalUnitUpdate(d *schema.ResourceData, m interface{})
 		prevCountry, _ := d.GetChange("country")
 		prev.Country = prevCountry.(string)
 	}
+	if d.HasChange("surname") {
+		prevSurname, _ := d.GetChange("surname")
+		prev.Surname = prevSurname.(string)
+	}
+	if d.HasChange("uid") {
+		prevUid, _ := d.GetChange("uid")
+		prev.Uid = prevUid.(string)
+	}
+	if d.HasChange("uid_number") {
+		prevUidNumber, _ := d.GetChange("uid_number")
+		prev.UidNumber = prevUidNumber.(int)
+	}
+	if d.HasChange("gid_number") {
+		prevGidNumber, _ := d.GetChange("gid_number")
+		prev.GidNumber = prevGidNumber.(int)
+	}
+	if d.HasChange("home_directory") {
+		prevHomeDirectory, _ := d.GetChange("home_directory")
+		prev.HomeDirectory = prevHomeDirectory.(string)
+	}
 	if err := client.Modify(&prev, &next); err != nil {
 		return err
 	}
-	return resourceLdapOrganizationalUnitRead(d, m)
+	return resourceLdapUserRead(d, m)
 }
 
-func resourceLdapOrganizationalUnitDelete(d *schema.ResourceData, m interface{}) error {
+func resourceLdapUserDelete(d *schema.ResourceData, m interface{}) error {
 	client := m.(*Client)
-	ou := NewOrganizationalUnit(d)
+	ou := NewUser(d)
 	if err := client.Delete(&ou); err != nil {
 		return err
 	}

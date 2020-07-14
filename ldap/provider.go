@@ -25,6 +25,7 @@ func Provider() *schema.Provider {
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"ldap_organizational_unit": resourceLdapOrganizationalUnit(),
+			"ldap_user":                resourceLdapUser(),
 			"ldap_group":               resourceLdapGroup(),
 		},
 		ConfigureFunc: providerConfigure,
