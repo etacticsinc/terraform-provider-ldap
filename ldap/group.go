@@ -22,6 +22,8 @@ type Group struct {
 	GroupCategory  string
 	GroupScope     string
 	HomePage       string
+	Members        []string
+	MemberUids     []string
 	Name           string
 	ObjectClass    []string
 	Path           string
@@ -30,10 +32,12 @@ type Group struct {
 
 func (g *Group) GetAttributes() Attributes {
 	m := map[string][]string{
-		"objectClass":    g.ObjectClass,
 		"description":    {g.Description},
-		"wWWHomePage":    {g.HomePage},
+		"member":         g.Members,
+		"memberUid":      g.MemberUids,
+		"objectClass":    g.ObjectClass,
 		"sAMAccountName": {g.SamAccountName},
+		"wWWHomePage":    {g.HomePage},
 	}
 	if g.GidNumber != 0 {
 		m["gidNumber"] = []string{strconv.Itoa(g.GidNumber)}
@@ -54,12 +58,13 @@ func (g *Group) GetAttributes() Attributes {
 }
 
 func (g *Group) SetAttributes(attributes Attributes) {
+	g.Description = attributes.GetFirst("description")
 	if attributes.HasValue("gidNumber") {
 		gidNumber, _ := strconv.Atoi(attributes.GetFirst("gidNumber"))
 		g.GidNumber = gidNumber
 	}
-	groupType := attributes.GetFirst("groupType")
-	if groupType != "" {
+	if attributes.HasValue("groupType") {
+		groupType := attributes.GetFirst("groupType")
 		mask, err := strconv.Atoi(groupType)
 		if err != nil {
 			categoryMasks := g.categoryMasks()
@@ -82,9 +87,10 @@ func (g *Group) SetAttributes(attributes Attributes) {
 			}
 		}
 	}
-	g.ObjectClass = attributes.Get("objectClass")
-	g.Description = attributes.GetFirst("description")
 	g.HomePage = attributes.GetFirst("wWWHomePage")
+	g.Members = attributes.Get("member")
+	g.MemberUids = attributes.Get("memberUid")
+	g.ObjectClass = attributes.Get("objectClass")
 	g.SamAccountName = attributes.GetFirst("sAMAccountName")
 }
 

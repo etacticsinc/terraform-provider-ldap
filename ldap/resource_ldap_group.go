@@ -61,6 +61,22 @@ func resourceLdapGroup() *schema.Resource {
 				Optional:    true,
 				Description: "Specifies the URL of the home page of the object.",
 			},
+			"members": {
+				Type:          schema.TypeSet,
+				Optional:      true,
+				Elem:          &schema.Schema{Type: schema.TypeString},
+				Set:           schema.HashString,
+				ConflictsWith: []string{"member_uids"},
+				Description:   "Specifies an array of user, group, and computer objects to add to the group.",
+			},
+			"member_uids": {
+				Type:          schema.TypeSet,
+				Optional:      true,
+				Elem:          &schema.Schema{Type: schema.TypeString},
+				Set:           schema.HashString,
+				ConflictsWith: []string{"members"},
+				Description:   "Contains the login names of the members of a group.",
+			},
 			"sam_account_name": {
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -80,6 +96,20 @@ func NewGroup(d *schema.ResourceData) Group {
 		GroupScope:     d.Get("group_scope").(string),
 		HomePage:       d.Get("homepage").(string),
 		SamAccountName: d.Get("sam_account_name").(string),
+	}
+	if m := d.Get("members").(*schema.Set); m != nil && m.Len() > 0 {
+		members := make([]string, 0)
+		for _, m := range m.List() {
+			members = append(members, m.(string))
+		}
+		g.Members = members
+	}
+	if m := d.Get("member_uids").(*schema.Set); m != nil && m.Len() > 0 {
+		memberUids := make([]string, 0)
+		for _, m := range m.List() {
+			memberUids = append(memberUids, m.(string))
+		}
+		g.MemberUids = memberUids
 	}
 	if c := d.Get("object_class").(*schema.Set); c != nil && c.Len() > 0 {
 		objectClass := make([]string, 0)
@@ -125,6 +155,26 @@ func resourceLdapGroupUpdate(d *schema.ResourceData, m interface{}) error {
 			}
 		}
 		prev.ObjectClass = prevObjectClass
+	}
+	if d.HasChange("members") {
+		prevMembers := make([]string, 0)
+		m, _ := d.GetChange("members")
+		if m := m.(*schema.Set); m.Len() > 0 {
+			for _, m := range m.List() {
+				prevMembers = append(prevMembers, m.(string))
+			}
+		}
+		prev.Members = prevMembers
+	}
+	if d.HasChange("member_uids") {
+		prevMemberUids := make([]string, 0)
+		m, _ := d.GetChange("member_uids")
+		if m := m.(*schema.Set); m.Len() > 0 {
+			for _, m := range m.List() {
+				prevMemberUids = append(prevMemberUids, m.(string))
+			}
+		}
+		prev.MemberUids = prevMemberUids
 	}
 	if d.HasChange("name") {
 		prevName, _ := d.GetChange("name")
