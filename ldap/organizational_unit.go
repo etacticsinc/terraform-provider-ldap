@@ -1,8 +1,8 @@
 package ldap
 
 import (
-	"etacticsinc/terraform-provider-ldap/ldap/internal"
 	"fmt"
+	"github.com/etacticsinc/terraform-provider-ldap/ldap/internal"
 )
 
 const (

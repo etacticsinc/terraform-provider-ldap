@@ -2,8 +2,8 @@ package ldap
 
 import (
 	"errors"
-	"etacticsinc/terraform-provider-ldap/ldap/internal"
 	"fmt"
+	"github.com/etacticsinc/terraform-provider-ldap/ldap/internal"
 	"github.com/go-ldap/ldap/v3"
 	"strings"
 )
