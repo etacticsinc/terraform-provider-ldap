@@ -1,9 +1,9 @@
 package main
 
 import (
+	"github.com/etacticsinc/terraform-provider-ldap/ldap"
 	"github.com/hashicorp/terraform-plugin-sdk/plugin"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
-	"github.com/etacticsinc/terraform-provider-ldap/ldap"
 )
 
 func main() {
