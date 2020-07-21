@@ -31,6 +31,11 @@ func resourceLdapUser() *schema.Resource {
 				Optional:    true,
 				Description: "Specifies a description of the object.",
 			},
+			"display_name": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The display name for an object.",
+			},
 			"email_address": {
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -162,6 +167,7 @@ func resourceLdapUserUnmarshal(d *schema.ResourceData) (oldUser *User, newUser *
 		"common_name":    func(u *User, v interface{}) { u.CommonName = v.(string) },
 		"country":        func(u *User, v interface{}) { u.Country = v.(string) },
 		"description":    func(u *User, v interface{}) { u.Description = v.(string) },
+		"display_name":   func(u *User, v interface{}) { u.DisplayName = v.(string) },
 		"email_address":  func(u *User, v interface{}) { u.EmailAddress = v.(string) },
 		"gid_number":     func(u *User, v interface{}) { u.GidNumber = v.(int) },
 		"given_name":     func(u *User, v interface{}) { u.GivenName = v.(string) },

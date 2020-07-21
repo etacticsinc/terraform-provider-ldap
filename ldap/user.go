@@ -21,6 +21,7 @@ type User struct {
 	CommonName        string
 	Country           string
 	Description       string
+	DisplayName       string
 	EmailAddress      string
 	GidNumber         int
 	GivenName         string
@@ -45,6 +46,7 @@ func (u *User) GetAttributes() Attributes {
 		"cn":                {u.CommonName},
 		"c":                 {u.Country},
 		"description":       {u.Description},
+		"displayName":       {u.DisplayName},
 		"mail":              {u.EmailAddress},
 		"givenName":         {u.GivenName},
 		"homeDirectory":     {u.HomeDirectory},
@@ -75,6 +77,7 @@ func (u *User) SetAttributes(attributes Attributes) {
 	u.CommonName = attributes.GetFirst("cn")
 	u.Country = attributes.GetFirst("c")
 	u.Description = attributes.GetFirst("description")
+	u.DisplayName = attributes.GetFirst("displayName")
 	if attributes.HasValue("gidNumber") {
 		gidNumber, _ := strconv.Atoi(attributes.GetFirst("gidNumber"))
 		u.GidNumber = gidNumber

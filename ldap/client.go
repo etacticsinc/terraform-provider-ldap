@@ -39,9 +39,9 @@ func (c *Client) Search(obj Object) error {
 		}
 		entries := result.Entries
 		if len(entries) == 0 { // Not found
-			return errors.New(fmt.Sprintf("Not found. (filter=%s)", filter))
+			return errors.New(fmt.Sprintf("Not found.\nbase: %s\nfilter: %s", baseDN, filter))
 		} else if len(entries) > 1 { // Non-unique (shouldn't be possible)
-			return errors.New(fmt.Sprintf("Non-unique result. (filter=%s)", filter))
+			return errors.New(fmt.Sprintf("Non-unique result.\nbase: %s\nfilter: %s", baseDN, filter))
 		}
 		m := make(map[string][]string)
 		for _, attr := range entries[0].Attributes {
