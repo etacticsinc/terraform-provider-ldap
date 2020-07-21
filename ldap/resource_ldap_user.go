@@ -11,6 +11,52 @@ func resourceLdapUser() *schema.Resource {
 		Update: resourceLdapUserUpdate,
 		Delete: resourceLdapUserDelete,
 		Schema: map[string]*schema.Schema{
+			"city": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Specifies the town or city.",
+			},
+			"common_name": {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The name that represents the object. Used to perform searches",
+			},
+			"country": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Specifies the country or region code.",
+			},
+			"description": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Specifies a description of the object.",
+			},
+			"email_address": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Specifies the user's e-mail address.",
+			},
+			"gid_number": {
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Description: "Contains an integer value that uniquely identifies a group in an administrative domain.",
+			},
+			"given_name": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Contains the given name (first name) of the user.",
+			},
+			"home_directory": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The home directory for the account.",
+			},
+			"name": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Specifies the name of the object.",
+				ForceNew:    true,
+			},
 			"object_class": {
 				Type:        schema.TypeSet,
 				Optional:    true,
@@ -19,47 +65,36 @@ func resourceLdapUser() *schema.Resource {
 				Set:         schema.HashString,
 				Description: "The list of classes from which this object is derived.",
 			},
-			"name": {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "Specifies the name of the object.",
-				ForceNew:    true,
-			},
 			"path": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Specifies the X.500 path of the OU or container where the new object is created.",
 				ForceNew:    true,
 			},
-			"description": {
+			"postal_code": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Specifies a description of the object.",
+				Description: "Specifies the postal code or zip code.",
+			},
+			"sam_account_name": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The logon name.",
+			},
+			"sam_account_type": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Contains information about every account type object.",
 			},
 			"street_address": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Specifies a street address.",
 			},
-			"city": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "Specifies the town or city.",
-			},
 			"state": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Specifies a state or province.",
-			},
-			"postal_code": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "Specifies the postal code or zip code.",
-			},
-			"country": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "Specifies the country or region code.",
 			},
 			"surname": {
 				Type:        schema.TypeString,
@@ -76,62 +111,29 @@ func resourceLdapUser() *schema.Resource {
 				Optional:    true,
 				Description: "Contains a number that uniquely identifies a user in an administrative domain.",
 			},
-			"gid_number": {
-				Type:        schema.TypeInt,
-				Optional:    true,
-				Description: "Contains an integer value that uniquely identifies a group in an administrative domain.",
-			},
-			"home_directory": {
+			"user_principal_name": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "The home directory for the account.",
+				Description: "Specifies a user principal name (UPN) in the format <user>@<DNS-domain-name>.",
 			},
 		},
 	}
 }
 
-func NewUser(d *schema.ResourceData) User {
-	ou := User{
-		City:          d.Get("city").(string),
-		Country:       d.Get("country").(string),
-		Description:   d.Get("description").(string),
-		GidNumber:     d.Get("gid_number").(int),
-		HomeDirectory: d.Get("home_directory").(string),
-		Name:          d.Get("name").(string),
-		Path:          d.Get("path").(string),
-		PostalCode:    d.Get("postal_code").(string),
-		StreetAddress: d.Get("street_address").(string),
-		State:         d.Get("state").(string),
-		Surname:       d.Get("surname").(string),
-		Uid:           d.Get("uid").(string),
-		UidNumber:     d.Get("uid_number").(int),
-	}
-	if c := d.Get("object_class").(*schema.Set); c != nil && c.Len() > 0 {
-		objectClass := make([]string, 0)
-		for _, c := range c.List() {
-			objectClass = append(objectClass, c.(string))
-		}
-		ou.ObjectClass = objectClass
-	} else {
-		ou.ObjectClass = []string{top, person, organizationalPerson, user}
-	}
-	return ou
-}
-
 func resourceLdapUserCreate(d *schema.ResourceData, m interface{}) error {
 	client := m.(*Client)
-	ou := NewUser(d)
-	if err := client.Add(&ou); err != nil {
+	_, u := resourceLdapUserUnmarshal(d)
+	if err := client.Add(u); err != nil {
 		return err
 	}
-	d.SetId(ou.GetDN())
+	d.SetId(u.GetDN())
 	return resourceLdapUserRead(d, m)
 }
 
 func resourceLdapUserRead(d *schema.ResourceData, m interface{}) error {
 	client := m.(*Client)
-	ou := NewUser(d)
-	if err := client.Search(&ou); err != nil {
+	_, u := resourceLdapUserUnmarshal(d)
+	if err := client.Search(u); err != nil {
 		return err
 	}
 	return nil
@@ -139,71 +141,7 @@ func resourceLdapUserRead(d *schema.ResourceData, m interface{}) error {
 
 func resourceLdapUserUpdate(d *schema.ResourceData, m interface{}) error {
 	client := m.(*Client)
-	prev := NewUser(d)
-	next := NewUser(d)
-	if d.HasChange("object_class") {
-		prevObjectClass := make([]string, 0)
-		c, _ := d.GetChange("object_class")
-		if c := c.(*schema.Set); c.Len() > 0 {
-			for _, c := range c.List() {
-				prevObjectClass = append(prevObjectClass, c.(string))
-			}
-		}
-		prev.ObjectClass = prevObjectClass
-	}
-	if d.HasChange("name") {
-		prevName, _ := d.GetChange("name")
-		prev.Name = prevName.(string)
-	}
-	if d.HasChange("path") {
-		prevPath, _ := d.GetChange("path")
-		prev.Path = prevPath.(string)
-	}
-	if d.HasChange("description") {
-		prevDescription, _ := d.GetChange("description")
-		prev.Description = prevDescription.(string)
-	}
-	if d.HasChange("street_address") {
-		prevStreetAddress, _ := d.GetChange("street_address")
-		prev.StreetAddress = prevStreetAddress.(string)
-	}
-	if d.HasChange("city") {
-		prevCity, _ := d.GetChange("city")
-		prev.City = prevCity.(string)
-	}
-	if d.HasChange("state") {
-		prevState, _ := d.GetChange("state")
-		prev.State = prevState.(string)
-	}
-	if d.HasChange("postal_code") {
-		prevPostalCode, _ := d.GetChange("postal_code")
-		prev.PostalCode = prevPostalCode.(string)
-	}
-	if d.HasChange("country") {
-		prevCountry, _ := d.GetChange("country")
-		prev.Country = prevCountry.(string)
-	}
-	if d.HasChange("surname") {
-		prevSurname, _ := d.GetChange("surname")
-		prev.Surname = prevSurname.(string)
-	}
-	if d.HasChange("uid") {
-		prevUid, _ := d.GetChange("uid")
-		prev.Uid = prevUid.(string)
-	}
-	if d.HasChange("uid_number") {
-		prevUidNumber, _ := d.GetChange("uid_number")
-		prev.UidNumber = prevUidNumber.(int)
-	}
-	if d.HasChange("gid_number") {
-		prevGidNumber, _ := d.GetChange("gid_number")
-		prev.GidNumber = prevGidNumber.(int)
-	}
-	if d.HasChange("home_directory") {
-		prevHomeDirectory, _ := d.GetChange("home_directory")
-		prev.HomeDirectory = prevHomeDirectory.(string)
-	}
-	if err := client.Modify(&prev, &next); err != nil {
+	if err := client.Modify(resourceLdapUserUnmarshal(d)); err != nil {
 		return err
 	}
 	return resourceLdapUserRead(d, m)
@@ -211,9 +149,56 @@ func resourceLdapUserUpdate(d *schema.ResourceData, m interface{}) error {
 
 func resourceLdapUserDelete(d *schema.ResourceData, m interface{}) error {
 	client := m.(*Client)
-	ou := NewUser(d)
-	if err := client.Delete(&ou); err != nil {
+	_, u := resourceLdapUserUnmarshal(d)
+	if err := client.Delete(u); err != nil {
 		return err
 	}
 	return nil
+}
+
+func resourceLdapUserUnmarshal(d *schema.ResourceData) (oldUser *User, newUser *User) {
+	properties := map[string]func(*User, interface{}){
+		"city":           func(u *User, v interface{}) { u.City = v.(string) },
+		"common_name":    func(u *User, v interface{}) { u.CommonName = v.(string) },
+		"country":        func(u *User, v interface{}) { u.Country = v.(string) },
+		"description":    func(u *User, v interface{}) { u.Description = v.(string) },
+		"email_address":  func(u *User, v interface{}) { u.EmailAddress = v.(string) },
+		"gid_number":     func(u *User, v interface{}) { u.GidNumber = v.(int) },
+		"given_name":     func(u *User, v interface{}) { u.GivenName = v.(string) },
+		"home_directory": func(u *User, v interface{}) { u.HomeDirectory = v.(string) },
+		"name":           func(u *User, v interface{}) { u.Name = v.(string) },
+		"object_class": func(u *User, v interface{}) {
+			if set := v.(*schema.Set); set != nil && set.Len() > 0 {
+				objectClass := make([]string, 0)
+				for _, c := range set.List() {
+					objectClass = append(objectClass, c.(string))
+				}
+				u.ObjectClass = objectClass
+			} else {
+				u.ObjectClass = []string{top, person, organizationalPerson, user}
+			}
+		},
+		"path":                func(u *User, v interface{}) { u.Path = v.(string) },
+		"postal_code":         func(u *User, v interface{}) { u.PostalCode = v.(string) },
+		"sam_account_name":    func(u *User, v interface{}) { u.SamAccountName = v.(string) },
+		"sam_account_type":    func(u *User, v interface{}) { u.SamAccountType = v.(string) },
+		"street_address":      func(u *User, v interface{}) { u.StreetAddress = v.(string) },
+		"state":               func(u *User, v interface{}) { u.State = v.(string) },
+		"surname":             func(u *User, v interface{}) { u.Surname = v.(string) },
+		"uid":                 func(u *User, v interface{}) { u.Uid = v.(string) },
+		"uid_number":          func(u *User, v interface{}) { u.UidNumber = v.(int) },
+		"user_principal_name": func(u *User, v interface{}) { u.UserPrincipalName = v.(string) },
+	}
+	newUser = new(User)
+	for property, fn := range properties {
+		fn(newUser, d.Get(property))
+		if d.HasChange(property) {
+			if oldUser == nil {
+				oldUser = new(User)
+			}
+			oldVal, _ := d.GetChange(property)
+			fn(oldUser, oldVal)
+		}
+	}
+	return
 }
