@@ -10,7 +10,31 @@ func resourceLdapOrganizationalUnit() *schema.Resource {
 		Read:   resourceLdapOrganizationalUnitRead,
 		Update: resourceLdapOrganizationalUnitUpdate,
 		Delete: resourceLdapOrganizationalUnitDelete,
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
 		Schema: map[string]*schema.Schema{
+			"city": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Specifies the town or city.",
+			},
+			"country": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Specifies the country or region code.",
+			},
+			"description": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Specifies a description of the object.",
+			},
+			"name": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Specifies the name of the object.",
+				ForceNew:    true,
+			},
 			"object_class": {
 				Type:        schema.TypeSet,
 				Optional:    true,
@@ -19,10 +43,10 @@ func resourceLdapOrganizationalUnit() *schema.Resource {
 				Set:         schema.HashString,
 				Description: "The list of classes from which this object is derived.",
 			},
-			"name": {
+			"organizational_unit": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Specifies the name of the object.",
+				Description: "The OU name",
 				ForceNew:    true,
 			},
 			"path": {
@@ -31,67 +55,29 @@ func resourceLdapOrganizationalUnit() *schema.Resource {
 				Description: "Specifies the X.500 path of the OU or container where the new object is created.",
 				ForceNew:    true,
 			},
-			"description": {
+			"postal_code": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Specifies a description of the object.",
+				Description: "Specifies the postal code or zip code.",
 			},
 			"street_address": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Specifies a street address.",
 			},
-			"city": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "Specifies the town or city.",
-			},
 			"state": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Specifies a state or province.",
 			},
-			"postal_code": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "Specifies the postal code or zip code.",
-			},
-			"country": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "Specifies the country or region code.",
-			},
 		},
 	}
 }
 
-func NewOrganizationalUnit(d *schema.ResourceData) OrganizationalUnit {
-	ou := OrganizationalUnit{
-		Name:          d.Get("name").(string),
-		Path:          d.Get("path").(string),
-		Description:   d.Get("description").(string),
-		StreetAddress: d.Get("street_address").(string),
-		City:          d.Get("city").(string),
-		State:         d.Get("state").(string),
-		PostalCode:    d.Get("postal_code").(string),
-		Country:       d.Get("country").(string),
-	}
-	if c := d.Get("object_class").(*schema.Set); c != nil && c.Len() > 0 {
-		objectClass := make([]string, 0)
-		for _, c := range c.List() {
-			objectClass = append(objectClass, c.(string))
-		}
-		ou.ObjectClass = objectClass
-	} else {
-		ou.ObjectClass = []string{top, organizationalUnit}
-	}
-	return ou
-}
-
 func resourceLdapOrganizationalUnitCreate(d *schema.ResourceData, m interface{}) error {
 	client := m.(*Client)
-	ou := NewOrganizationalUnit(d)
-	if err := client.Add(&ou); err != nil {
+	_, ou := resourceLdapOrganizationalUnitUnmarshal(d)
+	if err := client.Add(ou); err != nil {
 		return err
 	}
 	d.SetId(ou.GetDN())
@@ -100,8 +86,8 @@ func resourceLdapOrganizationalUnitCreate(d *schema.ResourceData, m interface{})
 
 func resourceLdapOrganizationalUnitRead(d *schema.ResourceData, m interface{}) error {
 	client := m.(*Client)
-	ou := NewOrganizationalUnit(d)
-	if err := client.Search(&ou); err != nil {
+	_, ou := resourceLdapOrganizationalUnitUnmarshal(d)
+	if err := client.Search(ou); err != nil {
 		return err
 	}
 	return nil
@@ -109,51 +95,7 @@ func resourceLdapOrganizationalUnitRead(d *schema.ResourceData, m interface{}) e
 
 func resourceLdapOrganizationalUnitUpdate(d *schema.ResourceData, m interface{}) error {
 	client := m.(*Client)
-	prev := NewOrganizationalUnit(d)
-	next := NewOrganizationalUnit(d)
-	if d.HasChange("object_class") {
-		prevObjectClass := make([]string, 0)
-		c, _ := d.GetChange("object_class")
-		if c := c.(*schema.Set); c.Len() > 0 {
-			for _, c := range c.List() {
-				prevObjectClass = append(prevObjectClass, c.(string))
-			}
-		}
-		prev.ObjectClass = prevObjectClass
-	}
-	if d.HasChange("name") {
-		prevName, _ := d.GetChange("name")
-		prev.Name = prevName.(string)
-	}
-	if d.HasChange("path") {
-		prevPath, _ := d.GetChange("path")
-		prev.Path = prevPath.(string)
-	}
-	if d.HasChange("description") {
-		prevDescription, _ := d.GetChange("description")
-		prev.Description = prevDescription.(string)
-	}
-	if d.HasChange("street_address") {
-		prevStreetAddress, _ := d.GetChange("street_address")
-		prev.StreetAddress = prevStreetAddress.(string)
-	}
-	if d.HasChange("city") {
-		prevCity, _ := d.GetChange("city")
-		prev.City = prevCity.(string)
-	}
-	if d.HasChange("state") {
-		prevState, _ := d.GetChange("state")
-		prev.State = prevState.(string)
-	}
-	if d.HasChange("postal_code") {
-		prevPostalCode, _ := d.GetChange("postal_code")
-		prev.PostalCode = prevPostalCode.(string)
-	}
-	if d.HasChange("country") {
-		prevCountry, _ := d.GetChange("country")
-		prev.Country = prevCountry.(string)
-	}
-	if err := client.Modify(&prev, &next); err != nil {
+	if err := client.Modify(resourceLdapOrganizationalUnitUnmarshal(d)); err != nil {
 		return err
 	}
 	return resourceLdapOrganizationalUnitRead(d, m)
@@ -161,9 +103,51 @@ func resourceLdapOrganizationalUnitUpdate(d *schema.ResourceData, m interface{})
 
 func resourceLdapOrganizationalUnitDelete(d *schema.ResourceData, m interface{}) error {
 	client := m.(*Client)
-	ou := NewOrganizationalUnit(d)
-	if err := client.Delete(&ou); err != nil {
+	_, ou := resourceLdapOrganizationalUnitUnmarshal(d)
+	if err := client.Delete(ou); err != nil {
 		return err
 	}
 	return nil
+}
+
+func resourceLdapOrganizationalUnitUnmarshal(d *schema.ResourceData) (oldOu *OrganizationalUnit, newOu *OrganizationalUnit) {
+	properties := map[string]func(*OrganizationalUnit, interface{}){
+		"city":        func(ou *OrganizationalUnit, v interface{}) { ou.City = v.(string) },
+		"country":     func(ou *OrganizationalUnit, v interface{}) { ou.Country = v.(string) },
+		"description": func(ou *OrganizationalUnit, v interface{}) { ou.Description = v.(string) },
+		"name":        func(ou *OrganizationalUnit, v interface{}) { ou.Name = v.(string) },
+		"object_class": func(ou *OrganizationalUnit, v interface{}) {
+			set := v.(*schema.Set)
+			if set.Len() > 0 {
+				objectClass := make([]string, 0)
+				for _, c := range set.List() {
+					objectClass = append(objectClass, c.(string))
+				}
+				ou.ObjectClass = objectClass
+			} else {
+				ou.ObjectClass = []string{top, organizationalUnit}
+				for _, objectClass := range ou.ObjectClass {
+					set.Add(objectClass)
+				}
+			}
+		},
+		"organizational_unit": func(ou *OrganizationalUnit, v interface{}) { ou.OrganizationalUnit = v.(string) },
+		"path":                func(ou *OrganizationalUnit, v interface{}) { ou.Path = v.(string) },
+		"postal_code":         func(ou *OrganizationalUnit, v interface{}) { ou.PostalCode = v.(string) },
+		"street_address":      func(ou *OrganizationalUnit, v interface{}) { ou.StreetAddress = v.(string) },
+		"state":               func(ou *OrganizationalUnit, v interface{}) { ou.State = v.(string) },
+	}
+	newOu = new(OrganizationalUnit)
+	oldOu = new(OrganizationalUnit)
+	for property, fn := range properties {
+		newVal := d.Get(property)
+		fn(newOu, newVal)
+		if d.HasChange(property) {
+			oldVal, _ := d.GetChange(property)
+			fn(oldOu, oldVal)
+		} else {
+			fn(oldOu, newVal)
+		}
+	}
+	return
 }

@@ -17,7 +17,9 @@ const (
 )
 
 type Group struct {
+	CommonName     string
 	Description    string
+	DisplayName    string
 	GidNumber      int
 	GroupCategory  string
 	GroupScope     string
@@ -28,13 +30,16 @@ type Group struct {
 	ObjectClass    []string
 	Path           string
 	SamAccountName string
+	SamAccountType string
 }
 
 func (g *Group) GetAttributes() Attributes {
 	m := map[string][]string{
 		"description":    {g.Description},
+		"displayName":    {g.DisplayName},
 		"member":         g.Members,
 		"memberUid":      g.MemberUids,
+		"name":           {g.Name},
 		"objectClass":    g.ObjectClass,
 		"sAMAccountName": {g.SamAccountName},
 		"wWWHomePage":    {g.HomePage},
@@ -59,6 +64,7 @@ func (g *Group) GetAttributes() Attributes {
 
 func (g *Group) SetAttributes(attributes Attributes) {
 	g.Description = attributes.GetFirst("description")
+	g.DisplayName = attributes.GetFirst("displayName")
 	if attributes.HasValue("gidNumber") {
 		gidNumber, _ := strconv.Atoi(attributes.GetFirst("gidNumber"))
 		g.GidNumber = gidNumber
@@ -107,7 +113,7 @@ func (g *Group) GetBaseDN() string {
 }
 
 func (g *Group) GetRelativeDN() string {
-	return "cn=" + g.Name
+	return "cn=" + g.CommonName
 }
 
 func (g *Group) categoryMasks() map[string]int {

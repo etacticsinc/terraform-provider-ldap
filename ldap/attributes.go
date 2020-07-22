@@ -49,6 +49,6 @@ func (a *Attributes) String() string {
 	a.ForEach(func(key string, value []string) {
 		m[key] = value
 	})
-	json, _ := json.Marshal(m)
+	json, _ := json.MarshalIndent(m, "", "  ")
 	return fmt.Sprintf("%v", string(json))
 }

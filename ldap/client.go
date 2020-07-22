@@ -39,9 +39,9 @@ func (c *Client) Search(obj Object) error {
 		}
 		entries := result.Entries
 		if len(entries) == 0 { // Not found
-			return errors.New(fmt.Sprintf("Not found.\nbase: %s\nfilter: %s", baseDN, filter))
+			return errors.New(fmt.Sprintf("Resource not found.\nserver: %s\nbase: %s\nfilter: %s", c.Server, baseDN, filter))
 		} else if len(entries) > 1 { // Non-unique (shouldn't be possible)
-			return errors.New(fmt.Sprintf("Non-unique result.\nbase: %s\nfilter: %s", baseDN, filter))
+			return errors.New(fmt.Sprintf("Non-unique search result.\nserver: %s\nbase: %s\nfilter: %s", c.Server, baseDN, filter))
 		}
 		m := make(map[string][]string)
 		for _, attr := range entries[0].Attributes {
@@ -72,7 +72,7 @@ func (c *Client) Modify(old Object, new Object) error {
 			}
 			request := ldap.NewModifyDNRequest(old.GetDN(), new.GetRelativeDN(), true, newPath)
 			if err := conn.ModifyDN(request); err != nil {
-				return err
+				return errors.New(fmt.Sprintf("%v\ndn: %v\nrdn: %v\npath: %v", err, old.GetDN(), new.GetRelativeDN(), newPath))
 			}
 		}
 		oldAttributes := old.GetAttributes()
@@ -103,7 +103,10 @@ func (c *Client) Modify(old Object, new Object) error {
 			}
 		}
 		if modified {
-			return conn.Modify(request)
+			err := conn.Modify(request)
+			if err != nil {
+				return fmt.Errorf("%v\nattributes: %v", err, newAttributes.String())
+			}
 		}
 		return nil
 	}

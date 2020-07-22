@@ -10,6 +10,9 @@ func resourceLdapUser() *schema.Resource {
 		Read:   resourceLdapUserRead,
 		Update: resourceLdapUserUpdate,
 		Delete: resourceLdapUserDelete,
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
 		Schema: map[string]*schema.Schema{
 			"city": {
 				Type:        schema.TypeString,
@@ -20,6 +23,7 @@ func resourceLdapUser() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "The name that represents the object. Used to perform searches",
+				ForceNew:    true,
 			},
 			"country": {
 				Type:        schema.TypeString,
@@ -84,12 +88,12 @@ func resourceLdapUser() *schema.Resource {
 			"sam_account_name": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "The logon name.",
+				Description: "Specifies the Security Account Manager (SAM) account name of the user.",
 			},
 			"sam_account_type": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Contains information about every account type object.",
+				Description: "Specifies the Security Account Manager (SAM) account type of the user.",
 			},
 			"street_address": {
 				Type:        schema.TypeString,
@@ -174,7 +178,8 @@ func resourceLdapUserUnmarshal(d *schema.ResourceData) (oldUser *User, newUser *
 		"home_directory": func(u *User, v interface{}) { u.HomeDirectory = v.(string) },
 		"name":           func(u *User, v interface{}) { u.Name = v.(string) },
 		"object_class": func(u *User, v interface{}) {
-			if set := v.(*schema.Set); set != nil && set.Len() > 0 {
+			set := v.(*schema.Set)
+			if set.Len() > 0 {
 				objectClass := make([]string, 0)
 				for _, c := range set.List() {
 					objectClass = append(objectClass, c.(string))
@@ -182,6 +187,9 @@ func resourceLdapUserUnmarshal(d *schema.ResourceData) (oldUser *User, newUser *
 				u.ObjectClass = objectClass
 			} else {
 				u.ObjectClass = []string{top, person, organizationalPerson, user}
+				for _, objectClass := range u.ObjectClass {
+					set.Add(objectClass)
+				}
 			}
 		},
 		"path":                func(u *User, v interface{}) { u.Path = v.(string) },
@@ -196,14 +204,15 @@ func resourceLdapUserUnmarshal(d *schema.ResourceData) (oldUser *User, newUser *
 		"user_principal_name": func(u *User, v interface{}) { u.UserPrincipalName = v.(string) },
 	}
 	newUser = new(User)
+	oldUser = new(User)
 	for property, fn := range properties {
-		fn(newUser, d.Get(property))
+		newVal := d.Get(property)
+		fn(newUser, newVal)
 		if d.HasChange(property) {
-			if oldUser == nil {
-				oldUser = new(User)
-			}
 			oldVal, _ := d.GetChange(property)
 			fn(oldUser, oldVal)
+		} else {
+			fn(oldUser, newVal)
 		}
 	}
 	return
