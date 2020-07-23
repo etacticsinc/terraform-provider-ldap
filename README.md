@@ -15,9 +15,16 @@ The Terraform LDAP provider is a plugin that allows for automated management of 
 
 This provider is maintained and used internally by the Etactics, Inc. development team.
 
-## Build the Provider
+## Getting Started
 
-If you're building the provider, follow the instructions to [install it as a plugin](https://www.terraform.io/docs/plugins/basics.html#installing-a-plugin). After placing it into your plugins directory,  run `terraform init` to initialize it.
+- [Using the Provider](docs/index.md)
+- [Creating a User Account](docs/resources/user.md)
+- [Creating a Group](docs/resources/group.md)
+- [Creating an Organizational Unit](docs/resources/organizational_unit.md)
+
+## Build from Source
+
+If you're building the provider, follow the [plugin installation instructions](https://www.terraform.io/docs/plugins/basics.html#installing-a-plugin). After placing it into your plugins directory, run `terraform init` to initialize it.
 
 Requirements:
 - [Terraform](https://www.terraform.io/downloads.html) 0.12
@@ -37,10 +44,3 @@ Install the provider:
 cd $GOPATH/src/github.com/etacticsinc/terraform-provider-ldap
 go install
 ```
-
-## Getting Started
-
-- [Using the Provider](docs/index.md)
-- [Creating a User Account](docs/resources/user.md)
-- [Creating a Group](docs/resources/group.md)
-- [Creating an Organizational Unit](docs/resources/organizational_unit.md)
