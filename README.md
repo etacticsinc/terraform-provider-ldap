@@ -3,7 +3,7 @@
 </a>
 
 <a href="https://etactics.com">
-    <img src="https://github.com/etacticsinc/terraform-provider-ldap/etactics-logo.svg" alt="Etactics logo" title="Etactics" align="right" height="50" />
+    <img src="https://github.com/etacticsinc/terraform-provider-ldap/blob/master/etactics-logo.svg" alt="Etactics logo" title="Etactics" align="right" height="50" />
 </a>
 
 # Terraform Provider for LDAP
