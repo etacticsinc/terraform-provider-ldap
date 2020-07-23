@@ -51,7 +51,8 @@ resource "ldap_user" "jsmith" {
 
 * `name` - (Optional) Specifies the name of the object.
 
-* `object_class` - (Optional) The list of classes from which this object is derived. Defaults to ```hcl
+* `object_class` - (Optional) The list of classes from which this object is derived. Defaults to 
+```hcl
 ["top", "person","organizationalPerson","user"]
 ```
 
