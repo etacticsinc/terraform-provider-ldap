@@ -33,6 +33,8 @@ resource "ldap_user" "jsmith" {
 
 ## Argument Reference
 
+The following arguments are supported:
+
 * `city` - (Optional) Specifies the town or city.
 
 * `cn` - (Required) The name that represents the object. Used to perform searches.
@@ -77,5 +79,7 @@ resource "ldap_user" "jsmith" {
 * `user_principal_name` - (Optional) Specifies a user principal name (UPN) in the format <USER>@<DNS-domain-name>.
 
 ## Attribute Reference
+
+In addition to all arguments above, the following attributes are exported:
 
 * `id` - The distinguished name of the LDAP user
