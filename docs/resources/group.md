@@ -38,7 +38,7 @@ The following arguments are supported:
 
 * `gid_number` - (Optional) Contains an integer value that uniquely identifies a group in an administrative domain.
 
-* `group_category` - (Optional) Specifies the category of the group. The acceptable values for this parameter are "Distribution" and "Security."
+* `group_category` - (Optional) Specifies the category of the group. The acceptable values for this parameter are ``"Distribution"`` and ``"Security."``
 
 * `group_scope` - (Optional)Specifies the scope of the group. The acceptable values for this parameter are "Global," "DomainLocal" and "Universal."
 
@@ -50,10 +50,7 @@ The following arguments are supported:
 
 * `name` - (Optional) Specifies the name of the object.
 
-* `object_class` - (Optional) The list of classes from which this object is derived. Defaults to 
-```hcl
-  ["top", "group"]
-```
+* `object_class` - (Optional) The list of classes from which this object is derived. Defaults to ``["top", "group"]``
 
 * `path` - (Required) Specifies the X.500 path of the OU or container where the new object is created.
 
