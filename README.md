@@ -18,4 +18,4 @@ The Terraform LDAP provider is a plugin that allows for the management of an exi
 - [Using the Provider](docs/index.md)
 - [Creating a User Account](docs/resources/user.md)
 - [Creating a Group](docs/resources/group.md)
-- [Creating an Organizationl Unit](docs/resources/organizational_unit.md)
+- [Creating an Organizational Unit](docs/resources/organizational_unit.md)
