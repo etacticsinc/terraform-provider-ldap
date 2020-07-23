@@ -7,10 +7,23 @@ The Lightweight Directory Access Protocol (LDAP) provider is used to configure a
 ```hcl
 variable ldap_password {}
 
+# Configure the LDAP Provider
 provider "ldap" {
   server        = "ldap://corp.example.com"
   bind_dn       = "CN=Admin,OU=Users,OU=Example,DC=corp,DC=example,DC=com"
   bind_password = var.ldap_password
+}
+
+# Create a user account
+resource "ldap_user" "jsmith" {
+  cn                  = "jsmith"
+  path                = "OU=Users,OU=Example,DC=corp,DC=example,DC=com"
+  given_name          = "John"
+  surname             = "Smith"
+  display_name        = "John C Smith"
+  email_address       = "jsmith@example.com"
+  user_principal_name = "jsmith@corp.example.com"
+  description         = "Managed by Terraform"
 }
 ```
 
