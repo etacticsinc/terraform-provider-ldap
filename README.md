@@ -8,4 +8,14 @@
 
 # Terraform Provider for LDAP
 
+* Tutorials: [learn.hashicorp.com](https://learn.hashicorp.com/terraform?track=getting-started#getting-started)
+* LDAP Resources: [ldap.com](https://ldap.com/)
+
 The Terraform LDAP provider is a plugin that allows for the management of an existing directory server and its resources. This provider is maintained and used internally by the Etactics development team.
+
+## Getting Started
+
+- [Using the Provider](docs/index.md)
+- [Creating a User Account](docs/resources/user.md)
+- [Creating a Group](docs/resources/group.md)
+- [Creating an Organizationl Unit](docs/resources/organizational_unit.md)
