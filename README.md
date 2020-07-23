@@ -8,7 +8,7 @@
 
 # Terraform Provider for LDAP
 
-* LDAP Resources: [ldap.com](https://ldap.com/)
+* LDAP Reference: [ldap.com](https://ldap.com/)
 * Terraform Tutorials: [learn.hashicorp.com](https://learn.hashicorp.com/terraform?track=getting-started#getting-started)
 
 The Terraform LDAP provider is a plugin that allows for automated management of an existing directory server and its resources. 
