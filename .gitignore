@@ -10,6 +10,7 @@
 *.tf
 *.tfstate
 *.tfstate.backup
+.terraform
 terraform-provider-ldap
 
 # Output of the go coverage tool, specifically when used with LiteIDE

@@ -1,10 +1,5 @@
 package ldap
 
-import (
-	"fmt"
-	"github.com/etacticsinc/terraform-provider-ldap/ldap/internal"
-)
-
 const (
 	organizationalUnit = "organizationalUnit"
 )
@@ -13,6 +8,7 @@ type OrganizationalUnit struct {
 	City               string
 	Country            string
 	Description        string
+	DN                 string
 	Name               string
 	ObjectClass        []string
 	OrganizationalUnit string
@@ -53,13 +49,17 @@ func (ou *OrganizationalUnit) GetObjectClass() []string {
 }
 
 func (ou *OrganizationalUnit) GetDN() string {
-	return fmt.Sprintf("%s,%s", ou.GetRelativeDN(), ou.Path)
+	return ou.DN
 }
 
-func (ou *OrganizationalUnit) GetBaseDN() string {
-	return internal.BaseDN(ou.Path)
+func (ou *OrganizationalUnit) GetPath() string {
+	return ou.Path
 }
 
 func (ou *OrganizationalUnit) GetRelativeDN() string {
 	return "ou=" + ou.OrganizationalUnit
+}
+
+func (ou *OrganizationalUnit) SetDN(dn string) {
+	ou.DN = dn
 }

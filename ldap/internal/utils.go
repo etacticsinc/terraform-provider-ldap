@@ -1,31 +1,33 @@
 package internal
 
 import (
-	"github.com/go-ldap/ldap/v3"
+	"errors"
 	"strings"
 )
 
-func BaseDN(path string) string {
-	parts := strings.Split(path, ",")
-	baseDN := ""
-	for i := len(parts) - 1; i >= 0; i-- {
-		part := parts[i]
-		if !strings.EqualFold("dc", strings.Split(part, "=")[0]) {
-			return baseDN
-		}
-		if baseDN != "" {
-			part += ","
-		}
-		baseDN = part + baseDN
+func ParseDN(dn string) (rdn string, path string, err error) {
+	rdnIndex := strings.IndexRune(dn, ',')
+	if rdnIndex < 1 || rdnIndex == len(dn) - 1 {
+		err = errors.New("invalid distinguished name")
+		return
 	}
-	return baseDN
+	rdn = dn[:rdnIndex]
+	path = dn[rdnIndex+1:]
+	return
 }
 
 func Filter(relativeDN string, objectClass []string) string {
-	filters := make([]string, len(objectClass)+1)
+	filtersLen := len(objectClass) + 1
+	if filtersLen < 2 {
+		filtersLen = 2
+	}
+	filters := make([]string, filtersLen)
 	filters[0] = relativeDN
+	if objectClass == nil || len(objectClass) == 0 {
+		objectClass = []string{"*"}
+	}
 	for i, class := range objectClass {
-		filters[i+1] = "objectClass=" + ldap.EscapeFilter(class)
+		filters[i + 1] = "objectClass=" + class
 	}
 	return "(&(" + strings.Join(filters, ")(") + "))"
 }

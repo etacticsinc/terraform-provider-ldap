@@ -8,7 +8,8 @@ type Object interface {
 	GetObjectClass() []string
 	GetDN() string
 	GetRelativeDN() string
-	GetBaseDN() string
+	GetPath() string
 	GetAttributes() Attributes
 	SetAttributes(attributes Attributes)
+	SetDN(dn string)
 }

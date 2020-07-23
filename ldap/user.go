@@ -2,18 +2,17 @@ package ldap
 
 import (
 	"fmt"
-	"github.com/etacticsinc/terraform-provider-ldap/ldap/internal"
 	"strconv"
 )
 
 const (
-	person               = "person"
-	organizationalPerson = "organizationalPerson"
-	inetOrgPerson        = "inetOrgPerson"
-	posixAccount         = "posixAccount"
-	shadowAccount        = "shadowAccount"
-	user                 = "user"
-	normalUserAccount    = "NormalUserAccount"
+	PERSON                  = "person"
+	ORGANIZATIONAL_PERSON   = "organizationalPerson"
+	INET_ORG_PERSON         = "inetOrgPerson"
+	POSIX_ACCOUNT           = "posixAccount"
+	SHADOW_ACCOUNT          = "shadowAccount"
+	USER                    = "user"
+	SAM_NORMAL_USER_ACCOUNT = "NormalUserAccount"
 )
 
 type User struct {
@@ -22,6 +21,7 @@ type User struct {
 	Country           string
 	Description       string
 	DisplayName       string
+	DN                string
 	EmailAddress      string
 	GidNumber         int
 	GivenName         string
@@ -48,22 +48,25 @@ func (u *User) GetAttributes() Attributes {
 		"description":       {u.Description},
 		"displayName":       {u.DisplayName},
 		"mail":              {u.EmailAddress},
+		"gidNumber":         {""},
 		"givenName":         {u.GivenName},
 		"homeDirectory":     {u.HomeDirectory},
 		"name":              {u.Name},
 		"objectClass":       u.ObjectClass,
 		"postalCode":        {u.PostalCode},
 		"sAMAccountName":    {u.SamAccountName},
+		"sAMAccountType":    {""},
 		"st":                {u.State},
 		"streetAddress":     {u.StreetAddress},
 		"sn":                {u.Surname},
 		"uid":               {u.Uid},
+		"uidNumber":         {""},
 		"userPrincipalName": {u.UserPrincipalName},
 	}
 	if u.GidNumber != 0 {
 		m["gidNumber"] = []string{strconv.Itoa(u.GidNumber)}
 	}
-	if u.SamAccountType == normalUserAccount {
+	if u.SamAccountType == SAM_NORMAL_USER_ACCOUNT {
 		m["sAMAccountType"] = []string{fmt.Sprintf("%d", 0x30000000)}
 	}
 	if u.UidNumber != 0 {
@@ -92,7 +95,7 @@ func (u *User) SetAttributes(attributes Attributes) {
 	if attributes.HasValue("sAMAccountType") {
 		samAccountType, _ := strconv.Atoi(attributes.GetFirst("sAMAccountType"))
 		if samAccountType == 0x30000000 {
-			u.SamAccountType = normalUserAccount
+			u.SamAccountType = SAM_NORMAL_USER_ACCOUNT
 		}
 	}
 	u.State = attributes.GetFirst("st")
@@ -111,13 +114,17 @@ func (u *User) GetObjectClass() []string {
 }
 
 func (u *User) GetDN() string {
-	return fmt.Sprintf("%s,%s", u.GetRelativeDN(), u.Path)
+	return u.DN
 }
 
-func (u *User) GetBaseDN() string {
-	return internal.BaseDN(u.Path)
+func (u *User) GetPath() string {
+	return u.Path
 }
 
 func (u *User) GetRelativeDN() string {
 	return "cn=" + u.CommonName
+}
+
+func (u *User) SetDN(dn string) {
+	u.DN = dn
 }

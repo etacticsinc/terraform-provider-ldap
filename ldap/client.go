@@ -16,8 +16,9 @@ type Client struct {
 
 func (c *Client) Add(obj Object) error {
 	add := func(conn *ldap.Conn) error {
+		dn := fmt.Sprintf("%s,%s", obj.GetRelativeDN(), obj.GetPath())
 		attributes := obj.GetAttributes()
-		request := ldap.NewAddRequest(obj.GetDN(), []ldap.Control{})
+		request := ldap.NewAddRequest(dn, []ldap.Control{})
 		attributes.ForEach(request.Attribute)
 		if err := conn.Add(request); err != nil {
 			return fmt.Errorf("%v\nattributes: %v", err, attributes.String())
@@ -29,22 +30,24 @@ func (c *Client) Add(obj Object) error {
 
 func (c *Client) Search(obj Object) error {
 	search := func(conn *ldap.Conn) error {
-		baseDN := obj.GetBaseDN()
+		path := obj.GetPath()
 		filter := internal.Filter(obj.GetRelativeDN(), obj.GetObjectClass())
 		attributes := obj.GetAttributes()
-		request := ldap.NewSearchRequest(baseDN, ldap.ScopeWholeSubtree, 0, 0, 0, false, filter, attributes.Keys(), []ldap.Control{})
+		request := ldap.NewSearchRequest(path, ldap.ScopeWholeSubtree, 0, 0, 0, false, filter, attributes.Keys(), []ldap.Control{})
 		result, err := conn.Search(request)
 		if err != nil {
-			return fmt.Errorf("%v\nbase: %v\nfilter: %v", err, baseDN, filter)
+			return fmt.Errorf("%s\nserver: %s\nsearch base: %s\nfilter: %s", err, c.Server, path, filter)
 		}
 		entries := result.Entries
 		if len(entries) == 0 { // Not found
-			return errors.New(fmt.Sprintf("Resource not found.\nserver: %s\nbase: %s\nfilter: %s", c.Server, baseDN, filter))
+			return errors.New(fmt.Sprintf("Resource not found.\nserver: %s\nsearch base: %s\nfilter: %s", c.Server, path, filter))
 		} else if len(entries) > 1 { // Non-unique (shouldn't be possible)
-			return errors.New(fmt.Sprintf("Non-unique search result.\nserver: %s\nbase: %s\nfilter: %s", c.Server, baseDN, filter))
+			return errors.New(fmt.Sprintf("Non-unique search result.\nserver: %s\nsearch base: %s\nfilter: %s", c.Server, path, filter))
 		}
 		m := make(map[string][]string)
-		for _, attr := range entries[0].Attributes {
+		entry := entries[0]
+		obj.SetDN(entry.DN)
+		for _, attr := range entry.Attributes {
 			m[attr.Name] = attr.Values
 		}
 		obj.SetAttributes(Attributes{m})
@@ -72,7 +75,7 @@ func (c *Client) Modify(old Object, new Object) error {
 			}
 			request := ldap.NewModifyDNRequest(old.GetDN(), new.GetRelativeDN(), true, newPath)
 			if err := conn.ModifyDN(request); err != nil {
-				return errors.New(fmt.Sprintf("%v\ndn: %v\nrdn: %v\npath: %v", err, old.GetDN(), new.GetRelativeDN(), newPath))
+				return errors.New(fmt.Sprintf("%vdn: %v\nrdn: %v\npath: %v", err, old.GetDN(), new.GetRelativeDN(), newPath))
 			}
 		}
 		oldAttributes := old.GetAttributes()
@@ -105,7 +108,7 @@ func (c *Client) Modify(old Object, new Object) error {
 		if modified {
 			err := conn.Modify(request)
 			if err != nil {
-				return fmt.Errorf("%v\nattributes: %v", err, newAttributes.String())
+				return fmt.Errorf("%vattributes: %v", err, newAttributes.String())
 			}
 		}
 		return nil

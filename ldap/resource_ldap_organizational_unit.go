@@ -1,7 +1,10 @@
 package ldap
 
 import (
+	"errors"
+	"github.com/etacticsinc/terraform-provider-ldap/ldap/internal"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"strings"
 )
 
 func resourceLdapOrganizationalUnit() *schema.Resource {
@@ -32,6 +35,7 @@ func resourceLdapOrganizationalUnit() *schema.Resource {
 			"name": {
 				Type:        schema.TypeString,
 				Optional:    true,
+				Computed:    true,
 				Description: "Specifies the name of the object.",
 				ForceNew:    true,
 			},
@@ -43,10 +47,10 @@ func resourceLdapOrganizationalUnit() *schema.Resource {
 				Set:         schema.HashString,
 				Description: "The list of classes from which this object is derived.",
 			},
-			"organizational_unit": {
+			"ou": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "The OU name",
+				Description: "The organizational unit name",
 				ForceNew:    true,
 			},
 			"path": {
@@ -75,27 +79,36 @@ func resourceLdapOrganizationalUnit() *schema.Resource {
 }
 
 func resourceLdapOrganizationalUnitCreate(d *schema.ResourceData, m interface{}) error {
+	_, ou, err := resourceLdapOrganizationalUnitUnmarshal(d)
+	if err != nil {
+		return err
+	}
 	client := m.(*Client)
-	_, ou := resourceLdapOrganizationalUnitUnmarshal(d)
 	if err := client.Add(ou); err != nil {
 		return err
 	}
-	d.SetId(ou.GetDN())
 	return resourceLdapOrganizationalUnitRead(d, m)
 }
 
 func resourceLdapOrganizationalUnitRead(d *schema.ResourceData, m interface{}) error {
+	_, ou, err := resourceLdapOrganizationalUnitUnmarshal(d)
+	if err != nil {
+		return err
+	}
 	client := m.(*Client)
-	_, ou := resourceLdapOrganizationalUnitUnmarshal(d)
 	if err := client.Search(ou); err != nil {
 		return err
 	}
-	return nil
+	return resourceLdapOrganizationalUnitMarshal(ou, d)
 }
 
 func resourceLdapOrganizationalUnitUpdate(d *schema.ResourceData, m interface{}) error {
+	oldOu, newOu, err := resourceLdapOrganizationalUnitUnmarshal(d)
+	if err != nil {
+		return err
+	}
 	client := m.(*Client)
-	if err := client.Modify(resourceLdapOrganizationalUnitUnmarshal(d)); err != nil {
+	if err := client.Modify(oldOu, newOu); err != nil {
 		return err
 	}
 	return resourceLdapOrganizationalUnitRead(d, m)
@@ -103,50 +116,79 @@ func resourceLdapOrganizationalUnitUpdate(d *schema.ResourceData, m interface{})
 
 func resourceLdapOrganizationalUnitDelete(d *schema.ResourceData, m interface{}) error {
 	client := m.(*Client)
-	_, ou := resourceLdapOrganizationalUnitUnmarshal(d)
+	_, ou, _ := resourceLdapOrganizationalUnitUnmarshal(d)
 	if err := client.Delete(ou); err != nil {
 		return err
 	}
 	return nil
 }
 
-func resourceLdapOrganizationalUnitUnmarshal(d *schema.ResourceData) (oldOu *OrganizationalUnit, newOu *OrganizationalUnit) {
-	properties := map[string]func(*OrganizationalUnit, interface{}){
-		"city":        func(ou *OrganizationalUnit, v interface{}) { ou.City = v.(string) },
-		"country":     func(ou *OrganizationalUnit, v interface{}) { ou.Country = v.(string) },
-		"description": func(ou *OrganizationalUnit, v interface{}) { ou.Description = v.(string) },
-		"name":        func(ou *OrganizationalUnit, v interface{}) { ou.Name = v.(string) },
-		"object_class": func(ou *OrganizationalUnit, v interface{}) {
-			set := v.(*schema.Set)
-			if set.Len() > 0 {
-				objectClass := make([]string, 0)
-				for _, c := range set.List() {
-					objectClass = append(objectClass, c.(string))
-				}
-				ou.ObjectClass = objectClass
-			} else {
-				ou.ObjectClass = []string{top, organizationalUnit}
-				for _, objectClass := range ou.ObjectClass {
-					set.Add(objectClass)
-				}
-			}
-		},
-		"organizational_unit": func(ou *OrganizationalUnit, v interface{}) { ou.OrganizationalUnit = v.(string) },
-		"path":                func(ou *OrganizationalUnit, v interface{}) { ou.Path = v.(string) },
-		"postal_code":         func(ou *OrganizationalUnit, v interface{}) { ou.PostalCode = v.(string) },
-		"street_address":      func(ou *OrganizationalUnit, v interface{}) { ou.StreetAddress = v.(string) },
-		"state":               func(ou *OrganizationalUnit, v interface{}) { ou.State = v.(string) },
+func resourceLdapOrganizationalUnitMarshal(ou *OrganizationalUnit, d *schema.ResourceData) error {
+	if d.Id() != ou.DN {
+		d.SetId(ou.DN)
 	}
-	newOu = new(OrganizationalUnit)
-	oldOu = new(OrganizationalUnit)
-	for property, fn := range properties {
-		newVal := d.Get(property)
-		fn(newOu, newVal)
-		if d.HasChange(property) {
-			oldVal, _ := d.GetChange(property)
-			fn(oldOu, oldVal)
-		} else {
-			fn(oldOu, newVal)
+	d.Set("city", ou.City)
+	d.Set("country", ou.Country)
+	d.Set("description", ou.Description)
+	d.Set("name", ou.Name)
+	d.Set("object_class", ou.ObjectClass)
+	d.Set("ou", ou.OrganizationalUnit)
+	d.Set("path", ou.Path)
+	d.Set("postal_code", ou.PostalCode)
+	d.Set("street_address", ou.StreetAddress)
+	d.Set("state", ou.State)
+	return nil
+}
+
+func resourceLdapOrganizationalUnitUnmarshal(d *schema.ResourceData) (oldOu *OrganizationalUnit, newOu *OrganizationalUnit, err error) {
+	newOu = &OrganizationalUnit{DN: d.Id()}
+	oldOu = &OrganizationalUnit{DN: d.Id()}
+	if _, ok := d.GetOk("path"); !ok { // Absent on import
+		rdn, path, err := internal.ParseDN(d.Id())
+		if err != nil {
+			return oldOu, newOu, err
+		}
+		if !strings.HasPrefix(strings.ToLower(rdn), "ou=") {
+			return nil, nil, errors.New("invalid distinguished name; expected prefix \"ou=\"")
+		}
+		newOu.OrganizationalUnit = rdn[3:]
+		newOu.Path = path
+	} else {
+		properties := map[string]func(*OrganizationalUnit, interface{}){
+			"city":        func(ou *OrganizationalUnit, v interface{}) { ou.City = v.(string) },
+			"country":     func(ou *OrganizationalUnit, v interface{}) { ou.Country = v.(string) },
+			"description": func(ou *OrganizationalUnit, v interface{}) { ou.Description = v.(string) },
+			"name":        func(ou *OrganizationalUnit, v interface{}) { ou.Name = v.(string) },
+			"object_class": func(ou *OrganizationalUnit, v interface{}) {
+				set := v.(*schema.Set)
+				if set.Len() > 0 {
+					objectClass := make([]string, 0)
+					for _, c := range set.List() {
+						objectClass = append(objectClass, c.(string))
+					}
+					ou.ObjectClass = objectClass
+				} else {
+					ou.ObjectClass = []string{top, organizationalUnit}
+					for _, objectClass := range ou.ObjectClass {
+						set.Add(objectClass)
+					}
+				}
+			},
+			"ou":             func(ou *OrganizationalUnit, v interface{}) { ou.OrganizationalUnit = v.(string) },
+			"path":           func(ou *OrganizationalUnit, v interface{}) { ou.Path = v.(string) },
+			"postal_code":    func(ou *OrganizationalUnit, v interface{}) { ou.PostalCode = v.(string) },
+			"street_address": func(ou *OrganizationalUnit, v interface{}) { ou.StreetAddress = v.(string) },
+			"state":          func(ou *OrganizationalUnit, v interface{}) { ou.State = v.(string) },
+		}
+		for property, fn := range properties {
+			newVal := d.Get(property)
+			fn(newOu, newVal)
+			if d.HasChange(property) {
+				oldVal, _ := d.GetChange(property)
+				fn(oldOu, oldVal)
+			} else {
+				fn(oldOu, newVal)
+			}
 		}
 	}
 	return
