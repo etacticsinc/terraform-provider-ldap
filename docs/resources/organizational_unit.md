@@ -21,4 +21,4 @@ The following arguments are supported:
 
 In addition to all arguments above, the following attributes are exported:
 
-* `id` - The distinguished name of the LDAP organizational unit
+* `id` - The distinguished name of the LDAP organizational unit (e.g. ``OU=Servers,OU=Example,DC=corp,DC=example,DC=com``)
