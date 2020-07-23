@@ -62,4 +62,4 @@ The following arguments are supported:
 
 In addition to all arguments above, the following attributes are exported:
 
-* `id` - The distinguished name of the LDAP group
+* `id` - The distinguished name of the LDAP group (e.g. ``CN=Sales Managers,OU=Groups,OU=Example,DC=corp,DC=example,DC=com``)
