@@ -41,6 +41,8 @@ The following arguments are supported:
 
 * `country` - (Optional) Specifies the country or region code.
 
+* `description` - (Optional) Specifies a description of the object.
+
 * `display_name` - (Optional) The display name for an object.
 
 * `email_address` - (Optional) Specifies the user's e-mail address.
@@ -53,10 +55,7 @@ The following arguments are supported:
 
 * `name` - (Optional) Specifies the name of the object.
 
-* `object_class` - (Optional) The list of classes from which this object is derived. Defaults to 
-```hcl
-  ["top", "person","organizationalPerson","user"]
-```
+* `object_class` - (Optional) The list of classes from which this object is derived. Defaults to ``["top","person","organizationalPerson","user"]``
 
 * `path` - (Required) Specifies the X.500 path of the OU or container where the new object is created.
 
