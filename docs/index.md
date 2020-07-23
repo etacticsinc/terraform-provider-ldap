@@ -1,12 +1,11 @@
-# <provider> Provider
+# LDAP Provider
 
-Summary of what the provider is for, including use cases and links to
-app/service documentation.
+The Lightweight Directory Access Protocol (LDAP) provider is used to configure and interact with remote directory services such as Microsoft Active Directory or OpenLDAP. This provider must be configured with the appropriate host address and administrative bind credentials before use.
 
 ## Example Usage
 
 ```hcl
-// Code block with an example of how to use this provider.
+
 ```
 
 ## Argument Reference
