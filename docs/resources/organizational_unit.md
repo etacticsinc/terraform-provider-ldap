@@ -15,6 +15,25 @@ resource "ldap_organizational_unit" "servers" {
 
 The following arguments are supported:
 
+* `city` - (Optional) Specifies the town or city.
+
+* `country` - (Optional) Specifies the country or region code.
+
+* `description` - (Optional) Specifies a description of the object.
+
+* `name` - (Optional) Specifies the name of the object.
+
+* `object_class` - (Optional) The list of classes from which this object is derived. Defaults to ``["top","organizationalUnit"]``
+
+* `ou` - (Required) The organizational unit name.
+
+* `path` - (Required) Specifies the X.500 path of the OU or container where the new object is created.
+
+* `postal_code` - (Optional) Specifies the postal code or zip code.
+
+* `street_address` - (Optional) Specifies a street address.
+
+* `state` - (Optional) Specifies a state or province.
 
 
 ## Attribute Reference
