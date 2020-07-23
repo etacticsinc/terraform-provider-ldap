@@ -53,7 +53,7 @@ resource "ldap_user" "jsmith" {
 
 * `object_class` - (Optional) The list of classes from which this object is derived. Defaults to 
 ```hcl
-["top", "person","organizationalPerson","user"]
+  ["top", "person","organizationalPerson","user"]
 ```
 
 * `path` - (Required) Specifies the X.500 path of the OU or container where the new object is created.
