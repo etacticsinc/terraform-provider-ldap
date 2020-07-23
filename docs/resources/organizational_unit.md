@@ -1,18 +1,24 @@
-# <resource name> Resource/Data Source
+# Resource: ldap_organizational_unit
 
-Description of what this resource does, with links to official
-app/service documentation.
+Creates an LDAP organizational unit. 
 
 ## Example Usage
 
 ```hcl
-// Code block with an example of how to use this resource.
+resource "ldap_organizational_unit" "servers" {
+  ou          = "Servers"
+  path        = "OU=Example,DC=corp,DC=example,DC=com"
+}
 ```
 
 ## Argument Reference
 
-* `attribute_name` - (Optional/Required) List arguments this resource takes.
+The following arguments are supported:
+
+
 
 ## Attribute Reference
 
-* `attribute_name` - List attributes that this resource exports.
+In addition to all arguments above, the following attributes are exported:
+
+* `id` - The distinguished name of the LDAP organizational unit
