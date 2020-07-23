@@ -40,13 +40,13 @@ The following arguments are supported:
 
 * `group_category` - (Optional) Specifies the category of the group. The acceptable values for this parameter are ``"Distribution"`` and ``"Security."``
 
-* `group_scope` - (Optional)Specifies the scope of the group. The acceptable values for this parameter are "Global," "DomainLocal" and "Universal."
+* `group_scope` - (Optional) Specifies the scope of the group. The acceptable values for this parameter are "Global," "DomainLocal" and "Universal."
 
 * `homepage` - (Optional) Specifies the URL of the home page of the object.
 
-* `members` - (Optional) Specifies an array of user, group, and computer objects to add to the group.
+* `members` - (Optional) Specifies an array of user, group, and computer objects to add to the group. Conflicts with ``member_uids.``
 
-* `member_uids` - (Optional) Contains the login names of the members of a group.
+* `member_uids` - (Optional) Contains the login names of the members of a group. Conflicts with ``members.``
 
 * `name` - (Optional) Specifies the name of the object.
 
