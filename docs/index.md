@@ -5,9 +5,19 @@ The Lightweight Directory Access Protocol (LDAP) provider is used to configure a
 ## Example Usage
 
 ```hcl
+variable ldap_password {}
 
+provider "ldap" {
+  server        = "ldap://corp.example.com"
+  bind_dn       = "CN=Admin,OU=Users,OU=Example,DC=corp,DC=example,DC=com"
+  bind_password = var.ldap_password
+}
 ```
 
 ## Argument Reference
 
-* List any arguments for the provider block.
+The following arguments are supported in the LDAP ``provider`` block:
+
+* ``server`` - The LDAP server managed by this provider.
+* ``bind_dn`` - The distinguished name of the administrative user account used to access the directory.
+* ``bind_password`` - The password used for authentication.
