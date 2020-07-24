@@ -31,6 +31,7 @@ resource "ldap_user" "jsmith" {
 }
 ```
 
+
 ## Argument Reference
 
 The following arguments are supported:
@@ -76,6 +77,7 @@ The following arguments are supported:
 * `uid_number` - (Optional) Contains a number that uniquely identifies a user in an administrative domain.
 
 * `user_principal_name` - (Optional) Specifies a user principal name (UPN) in the format <USER>@<DNS-domain-name>.
+
 
 ## Attribute Reference
 
