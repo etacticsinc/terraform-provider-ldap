@@ -22,24 +22,25 @@ This provider is maintained and used internally by the Etactics, Inc. developmen
 - [Creating a Group](docs/resources/group.md)
 - [Creating an Organizational Unit](docs/resources/organizational_unit.md)
 
-## Build from Source
+## Installation
 
-If you're building the provider, follow the [plugin installation instructions](https://www.terraform.io/docs/plugins/basics.html#installing-a-plugin). After placing it into your plugins directory, run `terraform init` to initialize it.
+See [Provider Configuration](https://www.terraform.io/docs/configuration/providers.html#third-party-plugins) in the Terraform documentation for installation instructions.
+
+Pre-compiled binaries are available from the [Releases](https://github.com/etacticsinc/terraform-provider-ldap/releases) page.
+
+## Building from Source
 
 Requirements:
 - [Terraform](https://www.terraform.io/downloads.html) 0.12
 - [Go](https://golang.org/doc/install) 1.13+
 
-Clone repository to: `$GOPATH/src/github.com/etacticsinc/terraform-provider-ldap`
-
-Navigate to the provider directory and build the provider:
+Clone the repository and build the provider:
 
 ```sh
+git clone 
 cd $GOPATH/src/github.com/etacticsinc/terraform-provider-ldap
-go build
+go build -o terraform-provider-ldap
 ```
 
-Install the provider:
-```sh
-go install
-```
+After building the provider, follow the [plugin installation instructions](https://www.terraform.io/docs/plugins/basics.html#installing-a-plugin) 
+
