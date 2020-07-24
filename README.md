@@ -42,5 +42,5 @@ cd terraform-provider-ldap
 go build -o terraform-provider-ldap
 ```
 
-After building, follow the [plugin installation instructions](https://www.terraform.io/docs/plugins/basics.html#installing-a-plugin) and configure the provider in your module to begin use.
+After building, follow the [plugin installation instructions](https://www.terraform.io/docs/plugins/basics.html#installing-a-plugin) and initialize the provider to begin use.
 
