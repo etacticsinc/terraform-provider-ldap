@@ -15,7 +15,7 @@ The Terraform LDAP provider is a plugin that allows for automated management of 
 
 This provider is maintained and used internally by the Etactics, Inc. development team.
 
-## Getting Started
+## Quick Links
 
 - [Using the Provider](docs/index.md)
 - [Creating a User Account](docs/resources/user.md)
