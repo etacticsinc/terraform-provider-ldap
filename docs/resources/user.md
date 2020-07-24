@@ -2,7 +2,9 @@
 
 Creates an LDAP user account. 
 
+
 ## Example Usage
+
 
 ### Microsoft Active Directory
 ```hcl
