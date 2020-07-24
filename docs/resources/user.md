@@ -40,7 +40,7 @@ The following arguments are supported:
 
 * `city` - (Optional) Specifies the town or city.
 
-* `cn` - (Required) The name that represents the object. Used to perform searches.
+* `cn` - (Required) The common name that represents the object.
 
 * `country` - (Optional) Specifies the country or region code.
 
