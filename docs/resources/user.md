@@ -78,7 +78,7 @@ The following arguments are supported:
 
 * `uid_number` - (Optional) Contains a number that uniquely identifies a user in an administrative domain.
 
-* `user_principal_name` - (Optional) Specifies a user principal name (UPN) in the format <USER>@<DNS-domain-name>.
+* `user_principal_name` - (Optional) Specifies a user principal name (UPN) in the format ``<USER>@<DNS-DOMAIN-NAME>``.
 
 
 ## Attribute Reference
