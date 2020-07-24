@@ -32,7 +32,7 @@ Requirements:
 
 Clone repository to: `$GOPATH/src/github.com/etacticsinc/terraform-provider-ldap`
 
-Enter the provider directory and build the provider
+Navigate to the provider directory and build the provider:
 
 ```sh
 cd $GOPATH/src/github.com/etacticsinc/terraform-provider-ldap
@@ -41,6 +41,5 @@ go build
 
 Install the provider:
 ```sh
-cd $GOPATH/src/github.com/etacticsinc/terraform-provider-ldap
 go install
 ```
