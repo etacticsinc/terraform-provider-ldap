@@ -30,7 +30,7 @@ resource "ldap_group" "sales_managers" {
 
 The following arguments are supported:
 
-* `cn` - (Required) The name that represents the object. Used to perform searches.
+* `cn` - (Required) The common name that represents the object.
 
 * `description` - (Optional) Specifies a description of the object.
 
