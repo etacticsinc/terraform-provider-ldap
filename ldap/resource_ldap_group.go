@@ -38,20 +38,20 @@ func resourceLdapGroup() *schema.Resource {
 			"gid_number": {
 				Type:        schema.TypeInt,
 				Optional:    true,
-				Description: "Contains an integer value that uniquely identifies a GROUP in an administrative domain.",
+				Description: "Contains an integer value that uniquely identifies a group in an administrative domain.",
 			},
 			"group_category": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Computed:     true,
-				Description:  fmt.Sprintf("Specifies the category of the GROUP. The acceptable values for this parameter are \"%s\" and \"%s\"", DISTRIBUTION, SECURITY),
+				Description:  fmt.Sprintf("Specifies the category of the group. The acceptable values for this parameter are \"%s\" and \"%s\"", DISTRIBUTION, SECURITY),
 				ValidateFunc: validation.StringInSlice([]string{DISTRIBUTION, SECURITY}, false),
 			},
 			"group_scope": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Computed:     true,
-				Description:  fmt.Sprintf("Specifies the GROUP scope of the GROUP. The acceptable values for this parameter are \"%s,\" \"%s\" and \"%s\"", GLOBAL, DOMAIN_LOCAL, UNIVERSAL),
+				Description:  fmt.Sprintf("Specifies the scope of the group. The acceptable values for this parameter are \"%s,\" \"%s\" and \"%s\"", GLOBAL, DOMAIN_LOCAL, UNIVERSAL),
 				ValidateFunc: validation.StringInSlice([]string{GLOBAL, DOMAIN_LOCAL, UNIVERSAL}, false),
 			},
 			"homepage": {
@@ -65,7 +65,7 @@ func resourceLdapGroup() *schema.Resource {
 				Elem:          &schema.Schema{Type: schema.TypeString},
 				Set:           schema.HashString,
 				ConflictsWith: []string{"member_uids"},
-				Description:   "Specifies an array of USER, GROUP, and computer objects to add to the GROUP.",
+				Description:   "Specifies an array of user, group, and computer objects to add to the group.",
 			},
 			"member_uids": {
 				Type:          schema.TypeSet,
@@ -73,7 +73,7 @@ func resourceLdapGroup() *schema.Resource {
 				Elem:          &schema.Schema{Type: schema.TypeString},
 				Set:           schema.HashString,
 				ConflictsWith: []string{"members"},
-				Description:   "Contains the login names of the members of a GROUP.",
+				Description:   "Contains the login names of the members of a group.",
 			},
 			"name": {
 				Type:        schema.TypeString,
@@ -100,13 +100,13 @@ func resourceLdapGroup() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
-				Description: "Specifies the Security Account Manager (SAM) account name of the GROUP.",
+				Description: "Specifies the Security Account Manager (SAM) account name of the group.",
 			},
 			"sam_account_type": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
-				Description: "Specifies the Security Account Manager (SAM) account type of the GROUP.",
+				Description: "Specifies the Security Account Manager (SAM) account type of the group.",
 			},
 		},
 	}

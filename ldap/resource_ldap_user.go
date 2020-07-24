@@ -46,17 +46,17 @@ func resourceLdapUser() *schema.Resource {
 			"email_address": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Specifies the USER's e-mail address.",
+				Description: "Specifies the user's e-mail address.",
 			},
 			"gid_number": {
 				Type:        schema.TypeInt,
 				Optional:    true,
-				Description: "Contains an integer value that uniquely identifies a GROUP in an administrative domain.",
+				Description: "Contains an integer value that uniquely identifies a group in an administrative domain.",
 			},
 			"given_name": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Contains the given name (first name) of the USER.",
+				Description: "Contains the given name (first name) of the user.",
 			},
 			"home_directory": {
 				Type:        schema.TypeString,
@@ -93,13 +93,13 @@ func resourceLdapUser() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
-				Description: "Specifies the Security Account Manager (SAM) account name of the USER.",
+				Description: "Specifies the Security Account Manager (SAM) account name of the user.",
 			},
 			"sam_account_type": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
-				Description: "Specifies the Security Account Manager (SAM) account type of the USER.",
+				Description: "Specifies the Security Account Manager (SAM) account type of the user.",
 			},
 			"street_address": {
 				Type:        schema.TypeString,
@@ -114,22 +114,22 @@ func resourceLdapUser() *schema.Resource {
 			"surname": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Specifies the USER's last name or surname.",
+				Description: "Specifies the user's last name or surname.",
 			},
 			"uid": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "A USER ID.",
+				Description: "A user ID.",
 			},
 			"uid_number": {
 				Type:        schema.TypeInt,
 				Optional:    true,
-				Description: "Contains a number that uniquely identifies a USER in an administrative domain.",
+				Description: "Contains a number that uniquely identifies a user in an administrative domain.",
 			},
 			"user_principal_name": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Specifies a USER principal name (UPN) in the format <USER>@<DNS-domain-name>.",
+				Description: "Specifies a user principal name (UPN) in the format <USER>@<DNS-domain-name>.",
 			},
 		},
 	}
