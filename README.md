@@ -24,7 +24,7 @@ This provider is maintained and used internally by the Etactics, Inc. developmen
 
 ## Installation
 
-See [Provider Configuration](https://www.terraform.io/docs/configuration/providers.html#third-party-plugins) in the Terraform documentation for installation instructions.
+See [Third-party Plugins](https://www.terraform.io/docs/configuration/providers.html#third-party-plugins) in the Terraform documentation for installation instructions.
 
 Pre-compiled binaries are available from the [Releases](https://github.com/etacticsinc/terraform-provider-ldap/releases) page.
 
