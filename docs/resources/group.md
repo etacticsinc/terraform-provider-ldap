@@ -6,6 +6,10 @@ Creates an LDAP group.
 
 ### Microsoft Active Directory
 ```hcl
+resource "ldap_user" "jsmith" {
+  ...
+}
+
 resource "ldap_group" "sales_managers" {
   cn          = "Sales Managers"
   path        = "OU=Groups,OU=Example,DC=corp,DC=example,DC=com"
@@ -16,6 +20,10 @@ resource "ldap_group" "sales_managers" {
 
 ### OpenLDAP
 ```hcl
+resource "ldap_user" "jsmith" {
+  ...
+}
+
 resource "ldap_group" "sales_managers" {
   object_class = ["top", "posixGroup"]
   cn           = "Sales Managers"
