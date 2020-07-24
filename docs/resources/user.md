@@ -86,3 +86,12 @@ The following arguments are supported:
 In addition to all arguments above, the following attributes are exported:
 
 * `id` - The distinguished name of the LDAP user (e.g. ``CN=jsmith,OU=Users,OU=Example,DC=corp,DC=example,DC=com``).
+
+
+## Import
+
+An existing user account can be imported using its distinguished name, e.g.
+
+```sh
+$ terraform import ldap_user.jsmith "CN=jsmith,OU=Users,OU=Example,DC=corp,DC=example,DC=com"
+```
