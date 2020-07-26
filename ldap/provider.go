@@ -23,6 +23,7 @@ func Provider() *schema.Provider {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "",
+				Sensitive: true,
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
