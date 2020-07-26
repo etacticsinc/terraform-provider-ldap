@@ -40,4 +40,13 @@ The following arguments are supported:
 
 In addition to all arguments above, the following attributes are exported:
 
-* `id` - The distinguished name of the LDAP organizational unit (e.g. ``OU=Servers,OU=Example,DC=corp,DC=example,DC=com``)
+* `id` - The distinguished name of the LDAP organizational unit (e.g. ``OU=Servers,OU=Example,DC=corp,DC=example,DC=com``).
+
+
+## Import
+
+An existing organizational unit can be imported using its distinguished name, e.g.
+
+```sh
+$ terraform import ldap_organizational_unit.servers "OU=Servers,OU=Example,DC=corp,DC=example,DC=com"
+```

@@ -40,7 +40,7 @@ The following arguments are supported:
 
 * `city` - (Optional) Specifies the town or city.
 
-* `cn` - (Required) The name that represents the object. Used to perform searches.
+* `cn` - (Required) The common name that represents the object.
 
 * `country` - (Optional) Specifies the country or region code.
 
@@ -78,7 +78,7 @@ The following arguments are supported:
 
 * `uid_number` - (Optional) Contains a number that uniquely identifies a user in an administrative domain.
 
-* `user_principal_name` - (Optional) Specifies a user principal name (UPN) in the format <USER>@<DNS-domain-name>.
+* `user_principal_name` - (Optional) Specifies a user principal name (UPN) in the format ``<USER>@<DNS-DOMAIN-NAME>``.
 
 
 ## Attribute Reference
@@ -86,3 +86,12 @@ The following arguments are supported:
 In addition to all arguments above, the following attributes are exported:
 
 * `id` - The distinguished name of the LDAP user (e.g. ``CN=jsmith,OU=Users,OU=Example,DC=corp,DC=example,DC=com``).
+
+
+## Import
+
+An existing user account can be imported using its distinguished name, e.g.
+
+```sh
+$ terraform import ldap_user.jsmith "CN=jsmith,OU=Users,OU=Example,DC=corp,DC=example,DC=com"
+```

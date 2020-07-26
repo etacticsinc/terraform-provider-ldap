@@ -6,6 +6,10 @@ Creates an LDAP group.
 
 ### Microsoft Active Directory
 ```hcl
+resource "ldap_user" "jsmith" {
+  ...
+}
+
 resource "ldap_group" "sales_managers" {
   cn          = "Sales Managers"
   path        = "OU=Groups,OU=Example,DC=corp,DC=example,DC=com"
@@ -16,6 +20,10 @@ resource "ldap_group" "sales_managers" {
 
 ### OpenLDAP
 ```hcl
+resource "ldap_user" "jsmith" {
+  ...
+}
+
 resource "ldap_group" "sales_managers" {
   object_class = ["top", "posixGroup"]
   cn           = "Sales Managers"
@@ -30,7 +38,7 @@ resource "ldap_group" "sales_managers" {
 
 The following arguments are supported:
 
-* `cn` - (Required) The name that represents the object. Used to perform searches.
+* `cn` - (Required) The common name that represents the object.
 
 * `description` - (Optional) Specifies a description of the object.
 
@@ -63,3 +71,12 @@ The following arguments are supported:
 In addition to all arguments above, the following attributes are exported:
 
 * `id` - The distinguished name of the LDAP group (e.g. ``CN=Sales Managers,OU=Groups,OU=Example,DC=corp,DC=example,DC=com``)
+
+
+## Import
+
+An existing group can be imported using its distinguished name, e.g.
+
+```sh
+$ terraform import ldap_group.sales_managers "CN=Sales Managers,OU=Groups,OU=Example,DC=corp,DC=example,DC=com"
+```
