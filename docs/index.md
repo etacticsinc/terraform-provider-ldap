@@ -23,6 +23,7 @@ resource "ldap_user" "jsmith" {
   display_name        = "John C Smith"
   email_address       = "jsmith@example.com"
   user_principal_name = "jsmith@corp.example.com"
+  sam_account_name    = "jsmith"
 }
 ```
 
